@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Treasure Sweeper</title>
+  <title>Minesweeper</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <style>
     :root{
@@ -60,9 +60,7 @@
       gap:14px;
     }
     @media (max-width:780px){
-      .content{
-        grid-template-columns:1fr;
-      }
+      .content{ grid-template-columns:1fr; }
     }
     .left, .right{min-width:0;}
     .header{
@@ -72,11 +70,7 @@
       gap:10px;
       margin-bottom:10px;
     }
-    .title-block{
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-    }
+    .title-block{ display:flex; flex-direction:column; gap:2px; }
     .title{
       letter-spacing:.08em;
       font-weight:800;
@@ -118,7 +112,7 @@
       border:1px solid rgba(148,163,184,.6);
       background:radial-gradient(circle at top,rgba(30,64,175,.9),rgba(15,23,42,.95));
       font-size:12px;
-      min-width:80px;
+      min-width:90px;
       justify-content:center;
     }
     .pill-label{
@@ -134,10 +128,6 @@
     .pill.timer{
       background:radial-gradient(circle at top,rgba(248,113,113,.95),rgba(30,64,175,.96));
       border-color:rgba(248,113,113,.7);
-    }
-    .pill.lives{
-      background:radial-gradient(circle at top,rgba(52,211,153,.95),rgba(15,23,42,.98));
-      border-color:rgba(74,222,128,.8);
     }
 
     .seed-row{
@@ -212,12 +202,6 @@
       transform:translateY(1px) scale(.98);
       box-shadow:0 4px 12px rgba(15,23,42,.8);
     }
-    .btn:disabled{
-      opacity:.6;
-      cursor:default;
-      box-shadow:none;
-      transform:none;
-    }
 
     .board-wrap{
       background:radial-gradient(circle at top,rgba(15,23,42,1),rgba(2,6,23,1));
@@ -233,6 +217,7 @@
       grid-template-columns:repeat(15, 1fr);
       gap:2px;
       touch-action:manipulation;
+      user-select:none;
     }
     .cell{
       position:relative;
@@ -269,41 +254,18 @@
       box-shadow:inset 0 0 0 1px rgba(15,23,42,.9);
       background:radial-gradient(circle at 30% 0%,rgba(30,64,175,.9),rgba(15,23,42,1));
     }
-    .cell.treasure{
-      background:radial-gradient(circle at 25% 0%,rgba(250,204,21,1),rgba(30,64,175,1));
-      box-shadow:inset 0 0 0 1px rgba(253,224,71,.9);
-      color:#0b1120;
-      font-weight:700;
-    }
-    .cell.trap{
+    .cell.mine{
       background:radial-gradient(circle at 20% 0%,rgba(248,113,113,1),rgba(127,29,29,1));
       box-shadow:inset 0 0 0 1px rgba(254,226,226,.9);
       color:#020617;
-      font-weight:700;
+      font-weight:800;
     }
-    .cell.monster{
-      background:radial-gradient(circle at 20% 0%,rgba(248,113,22,1),rgba(127,29,29,1));
-      box-shadow:inset 0 0 0 1px rgba(251,146,60,.9);
-      color:#020617;
-      font-weight:700;
+    .cell.flagged{
+      box-shadow:inset 0 0 0 1px rgba(250,204,21,.85);
     }
-    .cell.clue{
-      background:radial-gradient(circle at 25% 0%,rgba(34,197,94,1),rgba(15,23,42,1));
-      box-shadow:inset 0 0 0 1px rgba(74,222,128,.9);
-    }
-    .cell.empty{
-      background:radial-gradient(circle at 20% 0%,rgba(30,64,175,.8),rgba(15,23,42,1));
-      color:var(--muted);
-      font-size:11px;
-    }
-    .cell .emoji{
-      font-size:1.2em;
-      margin-right:2px;
-    }
-    .cell .delta{
-      font-size:.7em;
-      opacity:.9;
-      font-variant-numeric:tabular-nums;
+    .cell .num{
+      font-weight:800;
+      letter-spacing:.02em;
     }
 
     .legend-card{
@@ -344,19 +306,9 @@
       background:radial-gradient(circle at 30% 0,rgba(248,250,252,.95),rgba(30,64,175,.9));
       box-shadow:0 0 0 1px rgba(148,163,184,.7);
     }
-    .legend-text{
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-    }
-    .legend-name{
-      font-weight:600;
-      font-size:12px;
-    }
-    .legend-desc{
-      font-size:11px;
-      color:var(--muted);
-    }
+    .legend-text{ display:flex; flex-direction:column; gap:2px; }
+    .legend-name{ font-weight:600; font-size:12px; }
+    .legend-desc{ font-size:11px; color:var(--muted); }
 
     .hint{
       font-size:11px;
@@ -371,9 +323,7 @@
       min-height:16px;
       color:var(--muted);
     }
-    .message strong{
-      color:var(--gold);
-    }
+    .message strong{ color:var(--gold); }
 
     .badge-row{
       display:flex;
@@ -419,16 +369,18 @@
       border-radius:20px;
       padding:14px 16px;
       border:1px solid rgba(248,250,252,.18);
-      max-width:260px;
+      max-width:300px;
       width:88%;
       text-align:center;
       box-shadow:0 20px 50px rgba(0,0,0,.85);
       font-size:13px;
     }
     .overlay-title{
-      font-weight:700;
+      font-weight:800;
       margin-bottom:6px;
       font-size:14px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
     }
     .overlay-body{
       color:var(--muted);
@@ -437,10 +389,10 @@
     }
     .overlay-body span{
       color:var(--gold);
-      font-weight:600;
+      font-weight:700;
     }
     .overlay-seed{
-      margin-top:4px;
+      margin-top:6px;
       font-size:11px;
       color:var(--muted);
     }
@@ -471,23 +423,23 @@
       <header class="header">
         <div class="title-block">
           <div class="title">
-            <span class="logo">TS</span>
-            Treasure Sweeper
+            <span class="logo">MS</span>
+            Minesweeper
           </div>
-          <div class="subtitle">60-second treasure race</div>
+          <div class="subtitle">seeded classic minesweeper</div>
         </div>
         <div class="hud">
           <div class="pill timer">
             <div class="pill-label">Time</div>
-            <div class="pill-value" id="timeValue">60s</div>
+            <div class="pill-value" id="timeValue">00s</div>
           </div>
           <div class="pill">
-            <div class="pill-label">Score</div>
-            <div class="pill-value" id="scoreValue">0</div>
+            <div class="pill-label">Flags</div>
+            <div class="pill-value" id="flagsValue">0</div>
           </div>
-          <div class="pill lives">
-            <div class="pill-label">Lives</div>
-            <div class="pill-value" id="livesValue">3</div>
+          <div class="pill">
+            <div class="pill-label">Mines</div>
+            <div class="pill-value" id="minesValue">0</div>
           </div>
         </div>
       </header>
@@ -501,20 +453,21 @@
           <button class="btn secondary" id="useSeedBtn">Use Code</button>
           <button class="btn secondary" id="randomMapBtn">New Map</button>
         </div>
-        <button class="btn" id="restartBtn">Restart Round</button>
+        <button class="btn" id="restartBtn">Restart</button>
       </div>
 
       <div class="board-wrap">
         <div id="board" class="board"></div>
+
         <div class="overlay" id="overlay">
           <div class="overlay-backdrop"></div>
           <div class="overlay-card">
-            <div class="overlay-title" id="overlayTitle">Round Over</div>
+            <div class="overlay-title" id="overlayTitle">Game Over</div>
             <div class="overlay-body">
-              Final Score: <span id="overlayScore">0</span><br/>
-              Time Left: <span id="overlayTime">00s</span>
+              Result: <span id="overlayResult">Lost</span><br/>
+              Time: <span id="overlayTime">00s</span>
               <div class="overlay-seed">
-                Share this map code with your friend:
+                Map code:
                 <div class="overlay-seed-code" id="overlaySeedCode">ABC123</div>
               </div>
             </div>
@@ -523,10 +476,11 @@
             </div>
           </div>
         </div>
+
       </div>
 
       <div class="message" id="message">
-        Tap any tile to start the 60s countdown. Same map code = same board for both players.
+        Left click to reveal. Right click (or long-press) to flag 🚩. Same map code = same mine layout.
       </div>
     </div>
 
@@ -535,44 +489,41 @@
         <div class="legend-title">Legend</div>
         <div class="legend-list">
           <div class="legend-item">
-            <div class="legend-emoji">💎</div>
+            <div class="legend-emoji">🖱️</div>
             <div class="legend-text">
-              <div class="legend-name">Treasure</div>
-              <div class="legend-desc">+10 points</div>
+              <div class="legend-name">Reveal</div>
+              <div class="legend-desc">Left click</div>
             </div>
           </div>
           <div class="legend-item">
-            <div class="legend-emoji">⚡</div>
+            <div class="legend-emoji">🚩</div>
             <div class="legend-text">
-              <div class="legend-name">Trap</div>
-              <div class="legend-desc">-8 points</div>
+              <div class="legend-name">Flag</div>
+              <div class="legend-desc">Right click / long-press</div>
             </div>
           </div>
           <div class="legend-item">
-            <div class="legend-emoji">🧭</div>
+            <div class="legend-emoji">💣</div>
             <div class="legend-text">
-              <div class="legend-name">Clue</div>
-              <div class="legend-desc">Shows nearby 💎</div>
+              <div class="legend-name">Mine</div>
+              <div class="legend-desc">Don’t click it</div>
             </div>
           </div>
           <div class="legend-item">
-            <div class="legend-emoji">🔥</div>
+            <div class="legend-emoji">🔢</div>
             <div class="legend-text">
-              <div class="legend-name">Monster</div>
-              <div class="legend-desc">Lose 1 life & points</div>
+              <div class="legend-name">Number</div>
+              <div class="legend-desc">Mines touching</div>
             </div>
           </div>
         </div>
         <div class="badge-row">
           <div class="badge">15 × 15 Board</div>
-          <div class="badge">60s Round</div>
-          <div class="badge">3 Lives</div>
+          <div class="badge" id="badgeMines">Mines: 40</div>
+          <div class="badge">Seeded Maps</div>
         </div>
         <div class="hint">
-          <strong>How to compete:</strong><br/>
-          1. One player taps <em>New Map</em> → share the 6-letter code.<br/>
-          2. Both players enter the same code and play.<br/>
-          3. Higher score (tie-breaker: faster finish) wins!
+          <strong>Tip:</strong> If a cell shows “3”, exactly <em>three</em> mines touch it (8 neighbors). Use flags to mark mines.
         </div>
       </div>
     </aside>
@@ -581,54 +532,49 @@
 
 <script>
 (function(){
+  // ---- Config ----
   const BOARD_SIZE = 15;
-  const GAME_TIME = 60;
-  const TREASURE_POINTS = 10;
-  const TRAP_POINTS = -8;
-  const MONSTER_POINTS = -15;
-  const START_LIVES = 3;
-
+  const MINES_COUNT = 40; // classic-ish density for 15x15
   const boardEl = document.getElementById('board');
+
+  // HUD
   const timeValueEl = document.getElementById('timeValue');
-  const scoreValueEl = document.getElementById('scoreValue');
-  const livesValueEl = document.getElementById('livesValue');
+  const flagsValueEl = document.getElementById('flagsValue');
+  const minesValueEl = document.getElementById('minesValue');
+  const badgeMinesEl = document.getElementById('badgeMines');
   const messageEl = document.getElementById('message');
+
+  // Seed controls
   const seedInputEl = document.getElementById('seedInput');
   const useSeedBtn = document.getElementById('useSeedBtn');
   const randomMapBtn = document.getElementById('randomMapBtn');
   const restartBtn = document.getElementById('restartBtn');
 
+  // Overlay
   const overlayEl = document.getElementById('overlay');
   const overlayTitleEl = document.getElementById('overlayTitle');
-  const overlayScoreEl = document.getElementById('overlayScore');
+  const overlayResultEl = document.getElementById('overlayResult');
   const overlayTimeEl = document.getElementById('overlayTime');
   const overlaySeedCodeEl = document.getElementById('overlaySeedCode');
   const overlayCloseBtn = document.getElementById('overlayCloseBtn');
 
-  let boardData = [];
+  // ---- State ----
+  let board = []; // {mine:boolean, revealed:boolean, flagged:boolean, num:int}
   let gameState = 'idle'; // idle | running | over
-  let timeLeft = GAME_TIME;
-  let timerId = null;
-  let score = 0;
-  let lives = START_LIVES;
+  let flagsUsed = 0;
+  let revealedSafe = 0;
   let currentSeed = '';
+  let timerId = null;
+  let startMs = 0;
 
-  function padTime(sec){
-    return (sec<10? '0':'') + sec + 's';
-  }
-
-  function updateHUD(){
-    timeValueEl.textContent = padTime(timeLeft);
-    scoreValueEl.textContent = score;
-    livesValueEl.textContent = lives;
-  }
+  // ---- Helpers ----
+  function padTime(sec){ return (sec < 10 ? '0' : '') + sec + 's'; }
 
   function randomSeed(){
-    // 6-character alphanumeric uppercase
     return Math.random().toString(36).substring(2,8).toUpperCase();
   }
 
-  // xmur3 & mulberry32 for seeded RNG
+  // xmur3 & mulberry32 for seeded RNG (kept from your code)
   function xmur3(str){
     let h = 1779033703 ^ str.length;
     for(let i=0;i<str.length;i++){
@@ -650,228 +596,303 @@
       return ((t ^ t >>> 14) >>> 0) / 4294967296;
     }
   }
-
   function makeRngFromSeed(seedStr){
     const seedGen = xmur3(seedStr);
     const seed = seedGen();
     return mulberry32(seed);
   }
 
-  function resetGameState(){
-    clearInterval(timerId);
-    timerId = null;
-    score = 0;
-    lives = START_LIVES;
-    timeLeft = GAME_TIME;
-    gameState = 'idle';
-    updateHUD();
-    messageEl.innerHTML = 'Tap any tile to start the 60s countdown. Same map code = same board for both players.';
-    hideOverlay();
+  function idx(r,c){ return r * BOARD_SIZE + c; }
+
+  function inBounds(r,c){
+    return r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE;
   }
 
-  function generateBoard(seedStr){
-    currentSeed = seedStr || randomSeed();
-    seedInputEl.value = currentSeed.toUpperCase();
-    const rng = makeRngFromSeed(currentSeed);
-
-    // Initialize board data
-    boardData = [];
-    for(let r=0;r<BOARD_SIZE;r++){
-      const row = [];
-      for(let c=0;c<BOARD_SIZE;c++){
-        row.push({
-          type:'empty', // empty, treasure, trap, monster, clue
-          revealed:false,
-          neighborTreasures:0
-        });
-      }
-      boardData.push(row);
-    }
-
-    // First pass: assign treasures, traps, monsters, empties
-    for(let r=0;r<BOARD_SIZE;r++){
-      for(let c=0;c<BOARD_SIZE;c++){
-        const roll = rng();
-        let type = 'empty';
-        if(roll < 0.14){
-          type = 'treasure';
-        }else if(roll < 0.23){
-          type = 'trap';
-        }else if(roll < 0.30){
-          type = 'monster';
-        } // else empty
-        boardData[r][c].type = type;
+  function neighbors(r,c){
+    const out = [];
+    for(let dr=-1; dr<=1; dr++){
+      for(let dc=-1; dc<=1; dc++){
+        if(dr===0 && dc===0) continue;
+        const rr = r+dr, cc = c+dc;
+        if(inBounds(rr,cc)) out.push([rr,cc]);
       }
     }
+    return out;
+  }
 
-    // Compute neighbor treasure counts
-    const dirs = [-1,0,1];
-    for(let r=0;r<BOARD_SIZE;r++){
-      for(let c=0;c<BOARD_SIZE;c++){
-        let count = 0;
-        for(let dr of dirs){
-          for(let dc of dirs){
-            if(dr===0 && dc===0) continue;
-            const nr = r+dr;
-            const nc = c+dc;
-            if(nr>=0 && nr<BOARD_SIZE && nc>=0 && nc<BOARD_SIZE){
-              if(boardData[nr][nc].type === 'treasure') count++;
-            }
-          }
-        }
-        boardData[r][c].neighborTreasures = count;
-      }
+  function updateHUD(){
+    minesValueEl.textContent = MINES_COUNT;
+    badgeMinesEl.textContent = 'Mines: ' + MINES_COUNT;
+    flagsValueEl.textContent = flagsUsed;
+
+    if(gameState === 'running'){
+      const sec = Math.floor((Date.now() - startMs)/1000);
+      timeValueEl.textContent = padTime(sec);
+    } else if(gameState === 'idle') {
+      timeValueEl.textContent = padTime(0);
     }
+  }
 
-    // Convert some empties with neighbor treasures to clues
-    for(let r=0;r<BOARD_SIZE;r++){
-      for(let c=0;c<BOARD_SIZE;c++){
-        const cell = boardData[r][c];
-        if(cell.type === 'empty' && cell.neighborTreasures>0){
-          cell.type = 'clue';
-        }
-      }
-    }
+  function showOverlay(title, result){
+    overlayTitleEl.textContent = title;
+    overlayResultEl.textContent = result;
+    const sec = (gameState === 'running' || gameState === 'over')
+      ? Math.floor((Date.now() - startMs)/1000)
+      : 0;
+    overlayTimeEl.textContent = padTime(sec);
+    overlaySeedCodeEl.textContent = currentSeed.toUpperCase();
+    overlayEl.classList.add('visible');
+  }
+  function hideOverlay(){ overlayEl.classList.remove('visible'); }
 
-    // Build DOM
+  function startTimerIfNeeded(){
+    if(gameState !== 'idle') return;
+    gameState = 'running';
+    startMs = Date.now();
+    timerId = setInterval(updateHUD, 250);
+  }
+
+  function stopTimer(){
+    clearInterval(timerId);
+    timerId = null;
+  }
+
+  // ---- Game Gen ----
+  function resetState(){
+    gameState = 'idle';
+    flagsUsed = 0;
+    revealedSafe = 0;
+    stopTimer();
+    updateHUD();
+    hideOverlay();
+    messageEl.innerHTML = 'Left click to reveal. Right click (or long-press) to flag 🚩. Same map code = same mine layout.';
+  }
+
+  function buildDom(){
     boardEl.innerHTML = '';
     for(let r=0;r<BOARD_SIZE;r++){
       for(let c=0;c<BOARD_SIZE;c++){
-        const cellEl = document.createElement('button');
-        cellEl.className = 'cell unrevealed';
-        cellEl.setAttribute('data-r',r);
-        cellEl.setAttribute('data-c',c);
-        cellEl.addEventListener('click', onCellClick, {passive:true});
-        boardEl.appendChild(cellEl);
+        const btn = document.createElement('button');
+        btn.className = 'cell unrevealed';
+        btn.setAttribute('data-r', r);
+        btn.setAttribute('data-c', c);
+
+        // left click
+        btn.addEventListener('click', onReveal, {passive:false});
+
+        // right click (desktop)
+        btn.addEventListener('contextmenu', (e)=>{
+          e.preventDefault();
+          onFlag(e);
+        });
+
+        // long press (mobile)
+        let pressTimer = null;
+        btn.addEventListener('pointerdown', (e)=>{
+          if(e.pointerType === 'mouse') return;
+          pressTimer = setTimeout(()=>{
+            onFlag(e);
+          }, 450);
+        });
+        btn.addEventListener('pointerup', ()=> clearTimeout(pressTimer));
+        btn.addEventListener('pointercancel', ()=> clearTimeout(pressTimer));
+        btn.addEventListener('pointerleave', ()=> clearTimeout(pressTimer));
+
+        boardEl.appendChild(btn);
+      }
+    }
+  }
+
+  function generateBoard(seedStr){
+    currentSeed = (seedStr || randomSeed()).toUpperCase();
+    seedInputEl.value = currentSeed;
+    const rng = makeRngFromSeed(currentSeed);
+
+    // Create cells
+    board = [];
+    for(let i=0;i<BOARD_SIZE*BOARD_SIZE;i++){
+      board.push({ mine:false, revealed:false, flagged:false, num:0 });
+    }
+
+    // Place mines via shuffled indices
+    const positions = [];
+    for(let i=0;i<BOARD_SIZE*BOARD_SIZE;i++) positions.push(i);
+    for(let i=positions.length-1;i>0;i--){
+      const j = Math.floor(rng() * (i+1));
+      [positions[i], positions[j]] = [positions[j], positions[i]];
+    }
+    for(let i=0;i<MINES_COUNT;i++){
+      board[positions[i]].mine = true;
+    }
+
+    // Compute numbers
+    for(let r=0;r<BOARD_SIZE;r++){
+      for(let c=0;c<BOARD_SIZE;c++){
+        const cell = board[idx(r,c)];
+        if(cell.mine){ cell.num = -1; continue; }
+        let count = 0;
+        for(const [rr,cc] of neighbors(r,c)){
+          if(board[idx(rr,cc)].mine) count++;
+        }
+        cell.num = count;
       }
     }
 
-    resetGameState();
+    buildDom();
+    resetState();
+    updateHUD();
   }
 
-  function startTimerIfNeeded(){
-    if(gameState === 'idle'){
-      gameState = 'running';
-      messageEl.innerHTML = 'Hunt treasures fast! Round ends when time hits 0 or you lose all lives.';
-      timerId = setInterval(()=>{
-        if(gameState !== 'running'){
-          clearInterval(timerId);
-          timerId = null;
-          return;
-        }
-        timeLeft--;
-        if(timeLeft <= 0){
-          timeLeft = 0;
-          updateHUD();
-          endGame('Time is up!');
-        }else{
-          updateHUD();
-        }
-      },1000);
+  // ---- Rendering ----
+  function setButtonText(el, text){
+    el.textContent = '';
+    if(text === '') return;
+    const span = document.createElement('span');
+    span.className = 'num';
+    span.textContent = text;
+    el.appendChild(span);
+  }
+
+  function renderCell(r,c){
+    const cell = board[idx(r,c)];
+    const el = boardEl.children[idx(r,c)];
+
+    el.classList.toggle('revealed', cell.revealed);
+    el.classList.toggle('unrevealed', !cell.revealed);
+    el.classList.toggle('flagged', cell.flagged);
+
+    if(!cell.revealed){
+      // show flag if flagged
+      el.textContent = cell.flagged ? '🚩' : '';
+      return;
+    }
+
+    // revealed:
+    if(cell.mine){
+      el.classList.add('mine');
+      el.textContent = '💣';
+      return;
+    }
+
+    el.classList.remove('mine');
+    if(cell.num > 0){
+      setButtonText(el, String(cell.num));
+    } else {
+      el.textContent = '';
     }
   }
 
-  function endGame(reason){
+  function revealAllMines(){
+    for(let r=0;r<BOARD_SIZE;r++){
+      for(let c=0;c<BOARD_SIZE;c++){
+        const cell = board[idx(r,c)];
+        if(cell.mine){
+          cell.revealed = true;
+          cell.flagged = false;
+          renderCell(r,c);
+        }
+      }
+    }
+  }
+
+  function endGame(win){
     if(gameState === 'over') return;
     gameState = 'over';
-    clearInterval(timerId);
-    timerId = null;
+    stopTimer();
     updateHUD();
-    let msg = '<strong>Round over.</strong> ';
-    msg += reason ? reason + ' ' : '';
-    msg += 'Tap <strong>Restart Round</strong> to try this map again, or <strong>New Map</strong> for a fresh one.';
-    messageEl.innerHTML = msg;
 
-    overlayTitleEl.textContent = 'Round Over';
-    overlayScoreEl.textContent = score;
-    overlayTimeEl.textContent = padTime(timeLeft);
-    overlaySeedCodeEl.textContent = currentSeed.toUpperCase();
-    showOverlay();
-  }
-
-  function showOverlay(){
-    overlayEl.classList.add('visible');
-  }
-  function hideOverlay(){
-    overlayEl.classList.remove('visible');
-  }
-
-  function revealCell(r,c){
-    const cell = boardData[r][c];
-    if(cell.revealed) return;
-    cell.revealed = true;
-    const idx = r*BOARD_SIZE + c;
-    const cellEl = boardEl.children[idx];
-    cellEl.classList.remove('unrevealed');
-    cellEl.classList.add('revealed');
-
-    // Clear content before setting
-    cellEl.textContent = '';
-    const emojiSpan = document.createElement('span');
-    emojiSpan.className = 'emoji';
-    const deltaSpan = document.createElement('span');
-    deltaSpan.className = 'delta';
-
-    if(cell.type === 'treasure'){
-      score += TREASURE_POINTS;
-      emojiSpan.textContent = '💎';
-      deltaSpan.textContent = '+10';
-      cellEl.appendChild(emojiSpan);
-      cellEl.appendChild(deltaSpan);
-      cellEl.classList.add('treasure');
-      messageEl.innerHTML = 'Nice! You found a <strong>Treasure</strong> 💎 (+10).';
-    }else if(cell.type === 'trap'){
-      score += TRAP_POINTS;
-      emojiSpan.textContent = '⚡';
-      deltaSpan.textContent = '-8';
-      cellEl.appendChild(emojiSpan);
-      cellEl.appendChild(deltaSpan);
-      cellEl.classList.add('trap');
-      messageEl.innerHTML = 'Ouch! A <strong>Trap</strong> ⚡ (-8).';
-    }else if(cell.type === 'monster'){
-      score += MONSTER_POINTS;
-      lives -= 1;
-      emojiSpan.textContent = '🔥';
-      deltaSpan.textContent = '-15';
-      cellEl.appendChild(emojiSpan);
-      cellEl.appendChild(deltaSpan);
-      cellEl.classList.add('monster');
-      if(lives <= 0){
-        lives = 0;
-        updateHUD();
-        endGame('The monsters got you!');
-        return;
-      }else{
-        messageEl.innerHTML = 'You woke a <strong>Monster</strong> 🔥 (-15, -1 life). Careful!';
-      }
-    }else if(cell.type === 'clue'){
-      cellEl.classList.add('clue');
-      emojiSpan.textContent = '🧭';
-      const countSpan = document.createElement('span');
-      countSpan.className = 'delta';
-      countSpan.textContent = '×'+cell.neighborTreasures;
-      cellEl.appendChild(emojiSpan);
-      cellEl.appendChild(countSpan);
-      messageEl.innerHTML = '🧭 Clue: there are <strong>'+cell.neighborTreasures+'</strong> treasures touching this tile.';
+    if(win){
+      messageEl.innerHTML = '<strong>You win!</strong> All safe tiles revealed.';
+      showOverlay('Victory', 'Won');
     }else{
-      cellEl.classList.add('empty');
-      cellEl.textContent = '';
+      messageEl.innerHTML = '<strong>Game over.</strong> You clicked a mine.';
+      showOverlay('Game Over', 'Lost');
     }
-
-    updateHUD();
   }
 
-  function onCellClick(e){
+  function checkWin(){
+    const safeTotal = BOARD_SIZE*BOARD_SIZE - MINES_COUNT;
+    if(revealedSafe >= safeTotal){
+      endGame(true);
+    }
+  }
+
+  // Flood fill for zeros
+  function floodReveal(startR, startC){
+    const stack = [[startR, startC]];
+    while(stack.length){
+      const [r,c] = stack.pop();
+      const cell = board[idx(r,c)];
+      if(cell.revealed || cell.flagged) continue;
+      if(cell.mine) continue;
+
+      cell.revealed = true;
+      revealedSafe++;
+      renderCell(r,c);
+
+      if(cell.num === 0){
+        for(const [rr,cc] of neighbors(r,c)){
+          const ncell = board[idx(rr,cc)];
+          if(!ncell.revealed && !ncell.mine && !ncell.flagged){
+            stack.push([rr,cc]);
+          }
+        }
+      }
+    }
+  }
+
+  // ---- Input handlers ----
+  function onReveal(e){
     if(gameState === 'over') return;
     const target = e.currentTarget;
     const r = parseInt(target.getAttribute('data-r'),10);
     const c = parseInt(target.getAttribute('data-c'),10);
-    const cell = boardData[r][c];
-    if(cell.revealed) return;
+    const cell = board[idx(r,c)];
+
+    if(cell.revealed || cell.flagged) return;
+
     startTimerIfNeeded();
-    revealCell(r,c);
+
+    if(cell.mine){
+      cell.revealed = true;
+      renderCell(r,c);
+      revealAllMines();
+      endGame(false);
+      return;
+    }
+
+    // reveal
+    if(cell.num === 0){
+      floodReveal(r,c);
+    } else {
+      cell.revealed = true;
+      revealedSafe++;
+      renderCell(r,c);
+    }
+
+    checkWin();
   }
 
+  function onFlag(e){
+    if(gameState === 'over') return;
+    const target = e.currentTarget || e.target;
+    if(!target || !target.classList.contains('cell')) return;
+
+    const r = parseInt(target.getAttribute('data-r'),10);
+    const c = parseInt(target.getAttribute('data-c'),10);
+    const cell = board[idx(r,c)];
+    if(cell.revealed) return;
+
+    startTimerIfNeeded();
+
+    cell.flagged = !cell.flagged;
+    flagsUsed += cell.flagged ? 1 : -1;
+    if(flagsUsed < 0) flagsUsed = 0;
+    renderCell(r,c);
+    updateHUD();
+  }
+
+  // ---- UI buttons ----
   useSeedBtn.addEventListener('click', ()=>{
     const value = (seedInputEl.value || '').trim().toUpperCase();
     if(!value){
@@ -879,24 +900,23 @@
       return;
     }
     generateBoard(value);
-    messageEl.innerHTML = 'Map loaded. Tap any tile to start your 60s round.';
+    messageEl.innerHTML = 'Map loaded. Start by revealing a tile.';
   });
 
   randomMapBtn.addEventListener('click', ()=>{
     generateBoard(randomSeed());
-    messageEl.innerHTML = 'New random map ready. Share the code <strong>'+currentSeed.toUpperCase()+'</strong> with your friend.';
+    messageEl.innerHTML = 'New map ready. Share the code <strong>'+currentSeed+'</strong> with your friend.';
   });
 
   restartBtn.addEventListener('click', ()=>{
     generateBoard(currentSeed);
-    messageEl.innerHTML = 'Same map, fresh start. Tap any tile to begin the timer.';
+    messageEl.innerHTML = 'Same map, fresh start.';
   });
 
   overlayCloseBtn.addEventListener('click', hideOverlay);
 
-  // Start with a random seed
-  const initialSeed = randomSeed();
-  generateBoard(initialSeed);
+  // ---- Start ----
+  generateBoard(randomSeed());
 })();
 </script>
 </body>
