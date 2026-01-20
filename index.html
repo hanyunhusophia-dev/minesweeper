@@ -7,12 +7,14 @@
   <style>
     :root{
       --card:rgba(15,23,42,.96);
-      --accent:#38bdf8;
       --bright:#e5e7eb;
       --muted:#9ca3af;
       --gold:#facc15;
       --shadow:0 24px 60px rgba(0,0,0,.7);
       --radius:18px;
+
+      /* ✅ GUARANTEED TILE SIZE (fixes invisible tiles) */
+      --cell-size: 34px; /* change to 28px / 40px etc */
     }
     *{box-sizing:border-box;margin:0;padding:0}
     body{
@@ -27,7 +29,7 @@
     }
     .game-shell{
       width:100%;
-      max-width:960px;
+      max-width:1100px;
       background:linear-gradient(135deg,rgba(15,23,42,.98),rgba(15,23,42,.92));
       border-radius:24px;
       padding:14px 14px 18px;
@@ -52,8 +54,9 @@
       display:grid;
       grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);
       gap:14px;
+      align-items:start;
     }
-    @media (max-width:780px){
+    @media (max-width:900px){
       .content{ grid-template-columns:1fr; }
     }
     .header{
@@ -62,6 +65,7 @@
       justify-content:space-between;
       gap:10px;
       margin-bottom:10px;
+      flex-wrap:wrap;
     }
     .title-block{ display:flex; flex-direction:column; gap:2px; }
     .title{
@@ -77,7 +81,7 @@
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      padding:3px 9px;
+      padding:3px 10px;
       border-radius:999px;
       background:radial-gradient(circle at 0 0,#38bdf8,#0ea5e9);
       color:#0b1120;
@@ -100,12 +104,12 @@
       display:inline-flex;
       align-items:center;
       gap:6px;
-      padding:5px 10px;
+      padding:6px 10px;
       border-radius:999px;
       border:1px solid rgba(148,163,184,.6);
       background:radial-gradient(circle at top,rgba(30,64,175,.9),rgba(15,23,42,.95));
       font-size:12px;
-      min-width:90px;
+      min-width:95px;
       justify-content:center;
     }
     .pill-label{
@@ -114,10 +118,7 @@
       color:var(--muted);
       font-size:10px;
     }
-    .pill-value{
-      font-variant-numeric:tabular-nums;
-      font-weight:700;
-    }
+    .pill-value{ font-variant-numeric:tabular-nums; font-weight:800; }
     .pill.timer{
       background:radial-gradient(circle at top,rgba(248,113,113,.95),rgba(30,64,175,.96));
       border-color:rgba(248,113,113,.7);
@@ -130,15 +131,15 @@
     .seed-row{
       display:flex;
       flex-wrap:wrap;
-      gap:6px;
-      margin-bottom:8px;
+      gap:8px;
+      margin-bottom:10px;
       align-items:center;
       justify-content:space-between;
     }
     .seed-left{
       display:flex;
       flex-wrap:wrap;
-      gap:6px;
+      gap:8px;
       align-items:center;
     }
     .seed-input-wrap{
@@ -152,110 +153,98 @@
     .seed-input-wrap input{
       border:none;
       outline:none;
-      padding:7px 10px;
+      padding:8px 10px;
       font-size:12px;
       background:transparent;
       color:var(--bright);
-      width:108px;
+      width:130px;
       text-transform:uppercase;
       font-variant-numeric:tabular-nums;
       letter-spacing:.1em;
     }
     .seed-input-wrap span{
-      padding:7px 10px;
+      padding:8px 10px;
       font-size:11px;
       text-transform:uppercase;
       letter-spacing:.14em;
       color:var(--muted);
       border-left:1px solid rgba(55,65,81,.9);
+      display:flex;
+      align-items:center;
     }
     .btn{
       border:none;
       outline:none;
       border-radius:999px;
-      padding:7px 14px;
+      padding:8px 14px;
       font-size:12px;
-      font-weight:600;
+      font-weight:700;
       cursor:pointer;
       letter-spacing:.06em;
       text-transform:uppercase;
       font-family:inherit;
       display:inline-flex;
       align-items:center;
-      gap:6px;
+      gap:8px;
       white-space:nowrap;
       transition:transform .08s ease, box-shadow .08s ease, background .12s ease;
       background:linear-gradient(135deg,#38bdf8,#0ea5e9);
       color:#0b1120;
-      box-shadow:0 10px 25px rgba(56,189,248,.45);
+      box-shadow:0 10px 25px rgba(56,189,248,.35);
     }
     .btn.secondary{
       background:rgba(15,23,42,1);
       color:var(--bright);
       border:1px solid rgba(148,163,184,.7);
-      box-shadow:0 10px 25px rgba(15,23,42,.9);
+      box-shadow:0 10px 25px rgba(15,23,42,.7);
     }
-    .btn:active{
-      transform:translateY(1px) scale(.98);
-      box-shadow:0 4px 12px rgba(15,23,42,.8);
-    }
+    .btn:active{ transform:translateY(1px) scale(.98); }
 
     .board-wrap{
       width:100%;
       background:radial-gradient(circle at top,rgba(15,23,42,1),rgba(2,6,23,1));
       border-radius:var(--radius);
-      padding:10px;
+      padding:12px;
       border:1px solid rgba(30,64,175,.9);
       box-shadow:0 15px 40px rgba(15,23,42,.9);
       position:relative;
       overflow:hidden;
     }
+
+    /* ✅ BOARD is fixed-size by cell-size, and centered */
     .board{
       display:grid;
-      grid-template-columns:repeat(15, 1fr);
+      grid-template-columns:repeat(15, var(--cell-size));
       gap:2px;
-      touch-action:manipulation;
-      user-select:none;
-
-      /* ✅ FIX: give the grid a real width so tiles don't collapse */
-      width:100%;
-      max-width:540px;
+      justify-content:center;
+      align-content:start;
+      width:fit-content;
       margin:0 auto;
+      user-select:none;
+      touch-action:manipulation;
     }
 
-    /* ---- FIX: prevent cell resizing / layout shift ---- */
+    /* ✅ CELLS have explicit width/height (no aspect-ratio) */
     .cell{
-      position:relative;
+      width:var(--cell-size);
+      height:var(--cell-size);
       border:0;
-      outline:none;
       padding:0;
       line-height:1;
-      min-width:0;
-      min-height:0;
-
-      background:radial-gradient(circle at 20% 0%,rgba(15,23,42,1),rgba(15,23,42,.95));
       border-radius:6px;
-      aspect-ratio:1/1;
+      cursor:pointer;
       display:flex;
       align-items:center;
       justify-content:center;
-      cursor:pointer;
-      font-size:clamp(12px,1.7vw,18px);
+      font-size:16px;
       color:var(--bright);
+      background:radial-gradient(circle at 20% 0%,rgba(15,23,42,1),rgba(15,23,42,.95));
       box-shadow:inset 0 0 0 1px rgba(148,163,184,.45);
-      transition:background .08s ease, transform .05s ease, box-shadow .08s ease, color .12s ease;
+      transition:transform .05s ease, box-shadow .08s ease, background .12s ease;
       -webkit-tap-highlight-color:transparent;
-      box-sizing:border-box;
     }
     .cell:focus,
     .cell:focus-visible{ outline:none; }
-    .cell:focus-visible{
-      box-shadow:
-        inset 0 0 0 1px rgba(148,163,184,.65),
-        0 0 0 2px rgba(56,189,248,.35);
-    }
-    /* --------------------------------------------------- */
-
     .cell.unrevealed::before{
       content:"";
       position:absolute;
@@ -279,28 +268,31 @@
       color:#020617;
       font-weight:900;
     }
-    .cell.flagged{
-      box-shadow:inset 0 0 0 1px rgba(250,204,21,.85);
-    }
-    .cell .num{
-      font-weight:900;
-      letter-spacing:.02em;
-    }
+    .cell.flagged{ box-shadow:inset 0 0 0 1px rgba(250,204,21,.85); }
+    .cell .num{ font-weight:900; }
     .cell.treasure-pop{
       box-shadow:
         inset 0 0 0 1px rgba(250,204,21,.95),
         0 0 0 2px rgba(250,204,21,.20);
     }
 
+    .message{
+      margin-top:10px;
+      font-size:12px;
+      min-height:16px;
+      color:var(--muted);
+    }
+    .message strong{ color:var(--gold); }
+
     .legend-card{
       background:var(--card);
       border-radius:var(--radius);
-      padding:10px 11px;
+      padding:12px;
       border:1px solid rgba(148,163,184,.6);
       box-shadow:0 15px 32px rgba(15,23,42,.88);
       display:flex;
       flex-direction:column;
-      gap:8px;
+      gap:10px;
       font-size:12px;
     }
     .legend-title{
@@ -312,54 +304,25 @@
     .legend-list{
       display:grid;
       grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:6px 10px;
+      gap:8px 10px;
     }
-    .legend-item{
-      display:flex;
-      align-items:center;
-      gap:6px;
-    }
+    .legend-item{ display:flex; align-items:center; gap:8px; }
     .legend-emoji{
-      width:22px;
-      height:22px;
-      border-radius:999px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
+      width:24px;height:24px;border-radius:999px;
+      display:inline-flex;align-items:center;justify-content:center;
       font-size:15px;
       background:radial-gradient(circle at 30% 0,rgba(248,250,252,.95),rgba(30,64,175,.9));
       box-shadow:0 0 0 1px rgba(148,163,184,.7);
     }
-    .legend-text{ display:flex; flex-direction:column; gap:2px; }
-    .legend-name{ font-weight:700; font-size:12px; }
-    .legend-desc{ font-size:11px; color:var(--muted); }
+    .legend-name{ font-weight:800; }
+    .legend-desc{ color:var(--muted); font-size:11px; }
 
-    .hint{
-      font-size:11px;
-      color:var(--muted);
-      line-height:1.4;
-      margin-top:4px;
-    }
-
-    .message{
-      margin-top:8px;
-      font-size:12px;
-      min-height:16px;
-      color:var(--muted);
-    }
-    .message strong{ color:var(--gold); }
-
-    .badge-row{
-      display:flex;
-      gap:5px;
-      margin-top:2px;
-      flex-wrap:wrap;
-    }
+    .badge-row{ display:flex; gap:6px; flex-wrap:wrap; }
     .badge{
       font-size:10px;
       text-transform:uppercase;
       letter-spacing:.12em;
-      padding:3px 7px;
+      padding:4px 8px;
       border-radius:999px;
       border:1px solid rgba(148,163,184,.5);
       color:var(--muted);
@@ -367,34 +330,23 @@
     }
 
     .overlay{
-      position:absolute;
-      inset:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      pointer-events:none;
-      opacity:0;
-      transition:opacity .2s ease;
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      pointer-events:none; opacity:0; transition:opacity .2s ease;
     }
-    .overlay.visible{
-      opacity:1;
-      pointer-events:auto;
-    }
+    .overlay.visible{ opacity:1; pointer-events:auto; }
     .overlay-backdrop{
-      position:absolute;
-      inset:0;
+      position:absolute; inset:0;
       background:radial-gradient(circle at 50% 0%,rgba(15,23,42,.1),rgba(15,23,42,.95));
       backdrop-filter:blur(3px);
     }
     .overlay-card{
-      position:relative;
-      z-index:1;
+      position:relative; z-index:1;
       background:rgba(15,23,42,.98);
       border-radius:20px;
       padding:14px 16px;
       border:1px solid rgba(248,250,252,.18);
-      max-width:320px;
-      width:88%;
+      max-width:320px; width:88%;
       text-align:center;
       box-shadow:0 20px 50px rgba(0,0,0,.85);
       font-size:13px;
@@ -406,20 +358,9 @@
       letter-spacing:.06em;
       text-transform:uppercase;
     }
-    .overlay-body{
-      color:var(--muted);
-      line-height:1.5;
-      margin-bottom:10px;
-    }
-    .overlay-body span{
-      color:var(--gold);
-      font-weight:900;
-    }
-    .overlay-seed{
-      margin-top:6px;
-      font-size:11px;
-      color:var(--muted);
-    }
+    .overlay-body{ color:var(--muted); line-height:1.5; margin-bottom:10px; }
+    .overlay-body span{ color:var(--gold); font-weight:900; }
+    .overlay-seed{ margin-top:6px; font-size:11px; color:var(--muted); }
     .overlay-seed-code{
       display:inline-block;
       margin-top:3px;
@@ -432,12 +373,7 @@
       text-transform:uppercase;
       color:var(--bright);
     }
-    .overlay-actions{
-      display:flex;
-      justify-content:center;
-      gap:8px;
-      margin-top:6px;
-    }
+    .overlay-actions{ display:flex; justify-content:center; gap:8px; margin-top:6px; }
   </style>
 </head>
 <body>
@@ -446,29 +382,15 @@
     <div class="left">
       <header class="header">
         <div class="title-block">
-          <div class="title">
-            <span class="logo">MS</span>
-            Minesweeper
-          </div>
+          <div class="title"><span class="logo">MS</span>Minesweeper</div>
           <div class="subtitle">seeded minesweeper + treasures</div>
         </div>
+
         <div class="hud">
-          <div class="pill timer">
-            <div class="pill-label">Time</div>
-            <div class="pill-value" id="timeValue">00s</div>
-          </div>
-          <div class="pill">
-            <div class="pill-label">Flags</div>
-            <div class="pill-value" id="flagsValue">0</div>
-          </div>
-          <div class="pill">
-            <div class="pill-label">Mines</div>
-            <div class="pill-value" id="minesValue">0</div>
-          </div>
-          <div class="pill" id="shieldPill">
-            <div class="pill-label">Shield</div>
-            <div class="pill-value" id="shieldValue">OFF</div>
-          </div>
+          <div class="pill timer"><div class="pill-label">Time</div><div class="pill-value" id="timeValue">00s</div></div>
+          <div class="pill"><div class="pill-label">Flags</div><div class="pill-value" id="flagsValue">0</div></div>
+          <div class="pill"><div class="pill-label">Mines</div><div class="pill-value" id="minesValue">0</div></div>
+          <div class="pill" id="shieldPill"><div class="pill-label">Shield</div><div class="pill-value" id="shieldValue">OFF</div></div>
         </div>
       </header>
 
@@ -507,53 +429,56 @@
       </div>
 
       <div class="message" id="message">
-        Left click to reveal. Right click (or long-press) to flag 🚩. Treasures can drop from number tiles!
+        Left click to reveal. Right click / long-press to flag 🚩. Treasures can drop from number tiles!
       </div>
     </div>
 
     <aside class="right">
       <div class="legend-card">
         <div class="legend-title">Legend</div>
+
         <div class="legend-list">
           <div class="legend-item">
             <div class="legend-emoji">🖱️</div>
-            <div class="legend-text">
+            <div>
               <div class="legend-name">Reveal</div>
               <div class="legend-desc">Left click</div>
             </div>
           </div>
           <div class="legend-item">
             <div class="legend-emoji">🚩</div>
-            <div class="legend-text">
+            <div>
               <div class="legend-name">Flag</div>
               <div class="legend-desc">Right click / long-press</div>
             </div>
           </div>
           <div class="legend-item">
+            <div class="legend-emoji">💣</div>
+            <div>
+              <div class="legend-name">Mine</div>
+              <div class="legend-desc">Don't click it</div>
+            </div>
+          </div>
+          <div class="legend-item">
             <div class="legend-emoji">🎁</div>
-            <div class="legend-text">
+            <div>
               <div class="legend-name">Treasure</div>
               <div class="legend-desc">Drops on numbers</div>
             </div>
           </div>
-          <div class="legend-item">
-            <div class="legend-emoji">🛡️</div>
-            <div class="legend-text">
-              <div class="legend-name">Shield</div>
-              <div class="legend-desc">Blocks 1 mine</div>
-            </div>
-          </div>
         </div>
+
         <div class="badge-row">
           <div class="badge">15 × 15 Board</div>
           <div class="badge" id="badgeMines">Mines: 40</div>
           <div class="badge" id="badgeTreasure">Treasure: 20%</div>
         </div>
-        <div class="hint">
-          <strong>Treasures:</strong><br/>
-          🧯 <b>Defuse</b> auto-flags a real mine.<br/>
-          🔍 <b>Scan</b> reveals safe neighbors (around the tile you clicked).<br/>
-          🛡️ <b>Shield</b> saves you from the next mine click.
+
+        <div class="legend-desc" style="line-height:1.5">
+          <div style="margin-top:6px"><strong style="color:var(--gold)">Treasures</strong></div>
+          🧯 Defuse auto-flags a real mine.<br/>
+          🔍 Scan reveals safe neighbors around your click.<br/>
+          🛡️ Shield blocks your next mine click.
         </div>
       </div>
     </aside>
@@ -565,12 +490,11 @@
   const BOARD_SIZE = 15;
   const MINES_COUNT = 40;
 
-  // ✅ Turn up / down anytime (0.30 = 30%, etc.)
-  const TREASURE_CHANCE = 0.20; // 20% chance when revealing a NUMBER tile (1-8)
+  // ✅ Turn up/down anytime
+  const TREASURE_CHANCE = 0.20; // 20% chance when you reveal a NUMBER tile
 
   const boardEl = document.getElementById('board');
 
-  // HUD
   const timeValueEl = document.getElementById('timeValue');
   const flagsValueEl = document.getElementById('flagsValue');
   const minesValueEl = document.getElementById('minesValue');
@@ -581,13 +505,11 @@
   const shieldPillEl = document.getElementById('shieldPill');
   const shieldValueEl = document.getElementById('shieldValue');
 
-  // Seed controls
   const seedInputEl = document.getElementById('seedInput');
   const useSeedBtn = document.getElementById('useSeedBtn');
   const randomMapBtn = document.getElementById('randomMapBtn');
   const restartBtn = document.getElementById('restartBtn');
 
-  // Overlay
   const overlayEl = document.getElementById('overlay');
   const overlayTitleEl = document.getElementById('overlayTitle');
   const overlayResultEl = document.getElementById('overlayResult');
@@ -595,8 +517,7 @@
   const overlaySeedCodeEl = document.getElementById('overlaySeedCode');
   const overlayCloseBtn = document.getElementById('overlayCloseBtn');
 
-  // ---- State ----
-  let board = []; // {mine:boolean, revealed:boolean, flagged:boolean, num:int}
+  let board = []; // {mine, revealed, flagged, num}
   let gameState = 'idle'; // idle | running | over
   let flagsUsed = 0;
   let revealedSafe = 0;
@@ -604,14 +525,12 @@
   let timerId = null;
   let startMs = 0;
 
-  // Treasure state
   let shieldActive = false;
 
-  // ---- Helpers ----
   function padTime(sec){ return (sec < 10 ? '0' : '') + sec + 's'; }
   function randomSeed(){ return Math.random().toString(36).substring(2,8).toUpperCase(); }
 
-  // xmur3 & mulberry32 for seeded RNG
+  // Seeded RNG (same technique as your original)
   function xmur3(str){
     let h = 1779033703 ^ str.length;
     for(let i=0;i<str.length;i++){
@@ -640,14 +559,14 @@
   }
 
   function idx(r,c){ return r * BOARD_SIZE + c; }
-  function inBounds(r,c){ return r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE; }
+  function inBounds(r,c){ return r>=0 && r<BOARD_SIZE && c>=0 && c<BOARD_SIZE; }
 
   function neighbors(r,c){
     const out = [];
     for(let dr=-1; dr<=1; dr++){
       for(let dc=-1; dc<=1; dc++){
         if(dr===0 && dc===0) continue;
-        const rr = r+dr, cc = c+dc;
+        const rr=r+dr, cc=c+dc;
         if(inBounds(rr,cc)) out.push([rr,cc]);
       }
     }
@@ -662,13 +581,13 @@
   function updateHUD(){
     minesValueEl.textContent = MINES_COUNT;
     badgeMinesEl.textContent = 'Mines: ' + MINES_COUNT;
-    badgeTreasureEl.textContent = 'Treasure: ' + Math.round(TREASURE_CHANCE * 100) + '%';
+    badgeTreasureEl.textContent = 'Treasure: ' + Math.round(TREASURE_CHANCE*100) + '%';
     flagsValueEl.textContent = flagsUsed;
 
     if(gameState === 'running'){
       const sec = Math.floor((Date.now() - startMs)/1000);
       timeValueEl.textContent = padTime(sec);
-    } else if(gameState === 'idle') {
+    }else{
       timeValueEl.textContent = padTime(0);
     }
     setShieldUI();
@@ -677,9 +596,7 @@
   function showOverlay(title, result){
     overlayTitleEl.textContent = title;
     overlayResultEl.textContent = result;
-    const sec = (gameState === 'running' || gameState === 'over')
-      ? Math.floor((Date.now() - startMs)/1000)
-      : 0;
+    const sec = Math.floor((Date.now() - startMs)/1000);
     overlayTimeEl.textContent = padTime(sec);
     overlaySeedCodeEl.textContent = currentSeed.toUpperCase();
     overlayEl.classList.add('visible');
@@ -692,48 +609,40 @@
     startMs = Date.now();
     timerId = setInterval(updateHUD, 250);
   }
+  function stopTimer(){ clearInterval(timerId); timerId=null; }
 
-  function stopTimer(){
-    clearInterval(timerId);
-    timerId = null;
-  }
-
-  // ---- Game Gen ----
   function resetState(){
-    gameState = 'idle';
-    flagsUsed = 0;
-    revealedSafe = 0;
-    shieldActive = false;
+    gameState='idle';
+    flagsUsed=0;
+    revealedSafe=0;
+    shieldActive=false;
     stopTimer();
     updateHUD();
     hideOverlay();
-    messageEl.innerHTML = 'Left click to reveal. Right click (or long-press) to flag 🚩. Treasures can drop from number tiles!';
+    messageEl.innerHTML = 'Left click to reveal. Right click / long-press to flag 🚩. Treasures can drop from number tiles!';
   }
 
   function buildDom(){
-    boardEl.innerHTML = '';
+    boardEl.innerHTML='';
     for(let r=0;r<BOARD_SIZE;r++){
       for(let c=0;c<BOARD_SIZE;c++){
-        const btn = document.createElement('button');
-        btn.className = 'cell unrevealed';
-        btn.setAttribute('data-r', r);
-        btn.setAttribute('data-c', c);
+        const btn=document.createElement('button');
+        btn.className='cell unrevealed';
+        btn.setAttribute('data-r',r);
+        btn.setAttribute('data-c',c);
 
         btn.addEventListener('click', onReveal, {passive:false});
+        btn.addEventListener('contextmenu', (e)=>{ e.preventDefault(); onFlag(e); });
 
-        btn.addEventListener('contextmenu', (e)=>{
-          e.preventDefault();
-          onFlag(e);
+        // long press for mobile
+        let pressTimer=null;
+        btn.addEventListener('pointerdown',(e)=>{
+          if(e.pointerType==='mouse') return;
+          pressTimer=setTimeout(()=> onFlag(e), 450);
         });
-
-        let pressTimer = null;
-        btn.addEventListener('pointerdown', (e)=>{
-          if(e.pointerType === 'mouse') return;
-          pressTimer = setTimeout(()=>{ onFlag(e); }, 450);
-        });
-        btn.addEventListener('pointerup', ()=> clearTimeout(pressTimer));
-        btn.addEventListener('pointercancel', ()=> clearTimeout(pressTimer));
-        btn.addEventListener('pointerleave', ()=> clearTimeout(pressTimer));
+        btn.addEventListener('pointerup',()=> clearTimeout(pressTimer));
+        btn.addEventListener('pointercancel',()=> clearTimeout(pressTimer));
+        btn.addEventListener('pointerleave',()=> clearTimeout(pressTimer));
 
         boardEl.appendChild(btn);
       }
@@ -741,34 +650,36 @@
   }
 
   function generateBoard(seedStr){
-    currentSeed = (seedStr || randomSeed()).toUpperCase();
-    seedInputEl.value = currentSeed;
-    const rng = makeRngFromSeed(currentSeed);
+    currentSeed=(seedStr || randomSeed()).toUpperCase();
+    seedInputEl.value=currentSeed;
+    const rng=makeRngFromSeed(currentSeed);
 
-    board = [];
+    board=[];
     for(let i=0;i<BOARD_SIZE*BOARD_SIZE;i++){
-      board.push({ mine:false, revealed:false, flagged:false, num:0 });
+      board.push({mine:false, revealed:false, flagged:false, num:0});
     }
 
-    const positions = [];
+    // place mines (seeded shuffle)
+    const positions=[];
     for(let i=0;i<BOARD_SIZE*BOARD_SIZE;i++) positions.push(i);
     for(let i=positions.length-1;i>0;i--){
-      const j = Math.floor(rng() * (i+1));
-      [positions[i], positions[j]] = [positions[j], positions[i]];
+      const j=Math.floor(rng()*(i+1));
+      [positions[i],positions[j]]=[positions[j],positions[i]];
     }
     for(let i=0;i<MINES_COUNT;i++){
-      board[positions[i]].mine = true;
+      board[positions[i]].mine=true;
     }
 
+    // compute numbers
     for(let r=0;r<BOARD_SIZE;r++){
       for(let c=0;c<BOARD_SIZE;c++){
-        const cell = board[idx(r,c)];
-        if(cell.mine){ cell.num = -1; continue; }
-        let count = 0;
+        const cell=board[idx(r,c)];
+        if(cell.mine){ cell.num=-1; continue; }
+        let count=0;
         for(const [rr,cc] of neighbors(r,c)){
           if(board[idx(rr,cc)].mine) count++;
         }
-        cell.num = count;
+        cell.num=count;
       }
     }
 
@@ -777,19 +688,9 @@
     updateHUD();
   }
 
-  // ---- Rendering ----
-  function setButtonText(el, text){
-    el.textContent = '';
-    if(text === '') return;
-    const span = document.createElement('span');
-    span.className = 'num';
-    span.textContent = text;
-    el.appendChild(span);
-  }
-
   function renderCell(r,c){
-    const cell = board[idx(r,c)];
-    const el = boardEl.children[idx(r,c)];
+    const cell=board[idx(r,c)];
+    const el=boardEl.children[idx(r,c)];
 
     el.classList.toggle('revealed', cell.revealed);
     el.classList.toggle('unrevealed', !cell.revealed);
@@ -803,25 +704,21 @@
 
     if(cell.mine){
       el.classList.add('mine');
-      el.textContent = '💣';
+      el.textContent='💣';
       return;
     }
 
     el.classList.remove('mine');
-    if(cell.num > 0){
-      setButtonText(el, String(cell.num));
-    } else {
-      el.textContent = '';
-    }
+    el.textContent = (cell.num>0) ? String(cell.num) : '';
   }
 
   function revealAllMines(){
     for(let r=0;r<BOARD_SIZE;r++){
       for(let c=0;c<BOARD_SIZE;c++){
-        const cell = board[idx(r,c)];
+        const cell=board[idx(r,c)];
         if(cell.mine){
-          cell.revealed = true;
-          cell.flagged = false;
+          cell.revealed=true;
+          cell.flagged=false;
           renderCell(r,c);
         }
       }
@@ -829,45 +726,40 @@
   }
 
   function endGame(win){
-    if(gameState === 'over') return;
-    gameState = 'over';
+    if(gameState==='over') return;
+    gameState='over';
     stopTimer();
     updateHUD();
-
     if(win){
-      messageEl.innerHTML = '<strong>You win!</strong> All safe tiles revealed.';
-      showOverlay('Victory', 'Won');
+      messageEl.innerHTML='<strong>You win!</strong> All safe tiles revealed.';
+      showOverlay('Victory','Won');
     }else{
-      messageEl.innerHTML = '<strong>Game over.</strong> You clicked a mine.';
-      showOverlay('Game Over', 'Lost');
+      messageEl.innerHTML='<strong>Game over.</strong> You clicked a mine.';
+      showOverlay('Game Over','Lost');
     }
   }
 
   function checkWin(){
     const safeTotal = BOARD_SIZE*BOARD_SIZE - MINES_COUNT;
-    if(revealedSafe >= safeTotal){
-      endGame(true);
-    }
+    if(revealedSafe >= safeTotal) endGame(true);
   }
 
-  function floodRevealNoTreasure(startR, startC){
-    const stack = [[startR, startC]];
+  function floodRevealNoTreasure(startR,startC){
+    const stack=[[startR,startC]];
     while(stack.length){
-      const [r,c] = stack.pop();
-      const cell = board[idx(r,c)];
+      const [r,c]=stack.pop();
+      const cell=board[idx(r,c)];
       if(cell.revealed || cell.flagged) continue;
       if(cell.mine) continue;
 
-      cell.revealed = true;
+      cell.revealed=true;
       revealedSafe++;
       renderCell(r,c);
 
-      if(cell.num === 0){
+      if(cell.num===0){
         for(const [rr,cc] of neighbors(r,c)){
-          const ncell = board[idx(rr,cc)];
-          if(!ncell.revealed && !ncell.mine && !ncell.flagged){
-            stack.push([rr,cc]);
-          }
+          const n=board[idx(rr,cc)];
+          if(!n.revealed && !n.mine && !n.flagged) stack.push([rr,cc]);
         }
       }
     }
@@ -875,108 +767,104 @@
 
   // ---- Treasures ----
   function popTreasureFX(r,c){
-    const el = boardEl.children[idx(r,c)];
+    const el=boardEl.children[idx(r,c)];
     el.classList.add('treasure-pop');
     setTimeout(()=> el.classList.remove('treasure-pop'), 450);
   }
 
-  function awardTreasure(triggerR, triggerC){
-    const roll = Math.random();
+  function awardTreasure(triggerR,triggerC){
+    const roll=Math.random();
 
     if(roll < 1/3){
-      // 🧯 Defuse: auto-flag one real mine (unrevealed, unflagged)
-      const candidates = [];
+      // 🧯 Defuse: auto-flag a real unflagged mine
+      const candidates=[];
       for(let i=0;i<board.length;i++){
         if(board[i].mine && !board[i].revealed && !board[i].flagged) candidates.push(i);
       }
-      if(candidates.length === 0){
-        messageEl.innerHTML = '🎁 Treasure found: <strong>Defuse</strong> — but no mines left!';
+      if(candidates.length===0){
+        messageEl.innerHTML='🎁 <strong>Defuse</strong> found — but no mines left!';
         return;
       }
-      const pick = candidates[Math.floor(Math.random() * candidates.length)];
-      board[pick].flagged = true;
-      flagsUsed += 1;
+      const pick=candidates[Math.floor(Math.random()*candidates.length)];
+      board[pick].flagged=true;
+      flagsUsed++;
 
-      const pr = Math.floor(pick / BOARD_SIZE);
-      const pc = pick % BOARD_SIZE;
-      renderCell(pr, pc);
+      const pr=Math.floor(pick/BOARD_SIZE);
+      const pc=pick%BOARD_SIZE;
+      renderCell(pr,pc);
 
-      popTreasureFX(triggerR, triggerC);
-      messageEl.innerHTML = '🎁 Treasure found: <strong>Defuse</strong> 🧯 — auto-flagged a mine!';
+      popTreasureFX(triggerR,triggerC);
+      messageEl.innerHTML='🎁 Treasure: <strong>Defuse</strong> 🧯 — auto-flagged a mine!';
       updateHUD();
     } else if(roll < 2/3){
-      // 🔍 Scan: reveal safe neighbors around the clicked number tile
-      popTreasureFX(triggerR, triggerC);
-      messageEl.innerHTML = '🎁 Treasure found: <strong>Scan</strong> 🔍 — revealing safe tiles around this number!';
-      for(const [rr,cc] of neighbors(triggerR, triggerC)){
-        const cell = board[idx(rr,cc)];
+      // 🔍 Scan: reveal safe neighbors around the clicked tile
+      popTreasureFX(triggerR,triggerC);
+      messageEl.innerHTML='🎁 Treasure: <strong>Scan</strong> 🔍 — revealing safe neighbors!';
+      for(const [rr,cc] of neighbors(triggerR,triggerC)){
+        const cell=board[idx(rr,cc)];
         if(!cell.mine && !cell.flagged && !cell.revealed){
-          if(cell.num === 0){
-            floodRevealNoTreasure(rr, cc);
-          } else {
-            cell.revealed = true;
+          if(cell.num===0) floodRevealNoTreasure(rr,cc);
+          else{
+            cell.revealed=true;
             revealedSafe++;
-            renderCell(rr, cc);
+            renderCell(rr,cc);
           }
         }
       }
       checkWin();
       updateHUD();
     } else {
-      // 🛡️ Shield: save you from the next mine click
-      shieldActive = true;
-      popTreasureFX(triggerR, triggerC);
-      messageEl.innerHTML = '🎁 Treasure found: <strong>Shield</strong> 🛡️ — blocks your next mine click!';
+      // 🛡️ Shield: blocks next mine click
+      shieldActive=true;
+      popTreasureFX(triggerR,triggerC);
+      messageEl.innerHTML='🎁 Treasure: <strong>Shield</strong> 🛡️ — blocks your next mine click!';
       updateHUD();
     }
   }
 
-  function maybeTreasureOnNumberCell(r,c, cell){
-    if(cell.num <= 0) return; // only 1-8 tiles
+  function maybeTreasureOnNumberCell(r,c,cell){
+    if(cell.num <= 0) return; // only number tiles
     if(Math.random() < TREASURE_CHANCE){
       awardTreasure(r,c);
     }
   }
 
-  // ---- Input handlers ----
   function onReveal(e){
-    if(gameState === 'over') return;
-    const target = e.currentTarget;
-    const r = parseInt(target.getAttribute('data-r'),10);
-    const c = parseInt(target.getAttribute('data-c'),10);
-    const cell = board[idx(r,c)];
-
+    if(gameState==='over') return;
+    const target=e.currentTarget;
+    const r=parseInt(target.getAttribute('data-r'),10);
+    const c=parseInt(target.getAttribute('data-c'),10);
+    const cell=board[idx(r,c)];
     if(cell.revealed || cell.flagged) return;
+
     startTimerIfNeeded();
 
     if(cell.mine){
-      // 🛡️ Shield blocks ONE mine click
       if(shieldActive){
-        shieldActive = false;
-        cell.flagged = true;
-        flagsUsed += 1;
+        shieldActive=false;
+        cell.flagged=true;
+        flagsUsed++;
         renderCell(r,c);
         updateHUD();
-        messageEl.innerHTML = '🛡️ <strong>Shield saved you!</strong> The mine was blocked and auto-flagged 🚩.';
+        messageEl.innerHTML='🛡️ <strong>Shield saved you!</strong> Mine was blocked and auto-flagged 🚩.';
         return;
       }
-
-      cell.revealed = true;
+      cell.revealed=true;
       renderCell(r,c);
       revealAllMines();
       endGame(false);
       return;
     }
 
-    if(cell.num === 0){
+    if(cell.num===0){
       floodRevealNoTreasure(r,c);
-      messageEl.innerHTML = 'Cleared an empty area.';
-    } else {
-      cell.revealed = true;
+      messageEl.innerHTML='Cleared an empty area.';
+    }else{
+      cell.revealed=true;
       revealedSafe++;
       renderCell(r,c);
 
-      // 🎁 Treasure roll applies here
+      // 🎁 treasure chance happens here
       maybeTreasureOnNumberCell(r,c,cell);
     }
 
@@ -985,48 +873,47 @@
   }
 
   function onFlag(e){
-    if(gameState === 'over') return;
-    const target = e.currentTarget || e.target;
+    if(gameState==='over') return;
+    const target=e.currentTarget || e.target;
     if(!target || !target.classList.contains('cell')) return;
 
-    const r = parseInt(target.getAttribute('data-r'),10);
-    const c = parseInt(target.getAttribute('data-c'),10);
-    const cell = board[idx(r,c)];
+    const r=parseInt(target.getAttribute('data-r'),10);
+    const c=parseInt(target.getAttribute('data-c'),10);
+    const cell=board[idx(r,c)];
     if(cell.revealed) return;
 
     startTimerIfNeeded();
 
-    cell.flagged = !cell.flagged;
+    cell.flagged=!cell.flagged;
     flagsUsed += cell.flagged ? 1 : -1;
     if(flagsUsed < 0) flagsUsed = 0;
     renderCell(r,c);
     updateHUD();
   }
 
-  // ---- UI buttons ----
   useSeedBtn.addEventListener('click', ()=>{
-    const value = (seedInputEl.value || '').trim().toUpperCase();
+    const value=(seedInputEl.value||'').trim().toUpperCase();
     if(!value){
-      messageEl.innerHTML = 'Enter a map code (e.g., <strong>'+randomSeed()+'</strong>) or tap <strong>New Map</strong>.';
+      messageEl.innerHTML='Enter a map code (example <strong>'+randomSeed()+'</strong>) or tap <strong>New Map</strong>.';
       return;
     }
     generateBoard(value);
-    messageEl.innerHTML = 'Map loaded. Start by revealing a tile.';
+    messageEl.innerHTML='Map loaded. Start by revealing a tile.';
   });
 
   randomMapBtn.addEventListener('click', ()=>{
     generateBoard(randomSeed());
-    messageEl.innerHTML = 'New map ready. Share the code <strong>'+currentSeed+'</strong> with your friend.';
+    messageEl.innerHTML='New map ready. Share the code <strong>'+currentSeed+'</strong>.';
   });
 
   restartBtn.addEventListener('click', ()=>{
     generateBoard(currentSeed);
-    messageEl.innerHTML = 'Same map, fresh start.';
+    messageEl.innerHTML='Same map, fresh start.';
   });
 
   overlayCloseBtn.addEventListener('click', hideOverlay);
 
-  // ---- Start ----
+  // Start
   generateBoard(randomSeed());
 })();
 </script>
