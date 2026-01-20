@@ -1,903 +1,187 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>Treasure Sweeper</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <style>
-    :root{
-      --bg:#050816;
-      --bg2:#0b1220;
-      --card:rgba(15,23,42,.96);
-      --accent:#38bdf8;
-      --accent-soft:rgba(56,189,248,.16);
-      --accent-2:#f97316;
-      --accent-3:#22c55e;
-      --bright:#e5e7eb;
-      --muted:#9ca3af;
-      --danger:#fb7185;
-      --gold:#facc15;
-      --shadow:0 24px 60px rgba(0,0,0,.7);
-      --radius:18px;
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{
-      min-height:100vh;
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background: radial-gradient(circle at top,#0f172a 0,#020617 55%,#000 100%);
-      color:var(--bright);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:12px;
-    }
-    .game-shell{
-      width:100%;
-      max-width:960px;
-      background:linear-gradient(135deg,rgba(15,23,42,.98),rgba(15,23,42,.92));
-      border-radius:24px;
-      padding:14px 14px 18px;
-      box-shadow:var(--shadow);
-      border:1px solid rgba(148,163,184,.45);
-      position:relative;
-      overflow:hidden;
-    }
-    .game-shell::before{
-      content:"";
-      position:absolute;
-      inset:-120px;
-      background:
-        radial-gradient(circle at 0% 0%,rgba(56,189,248,.12),transparent 55%),
-        radial-gradient(circle at 100% 0%,rgba(249,115,22,.12),transparent 55%);
-      pointer-events:none;
-      opacity:.7;
-    }
-    .content{
-      position:relative;
-      z-index:1;
-      display:grid;
-      grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);
-      gap:14px;
-    }
-    @media (max-width:780px){
-      .content{
-        grid-template-columns:1fr;
-      }
-    }
-    .left, .right{min-width:0;}
-    .header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:10px;
-    }
-    .title-block{
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-    }
-    .title{
-      letter-spacing:.08em;
-      font-weight:800;
-      text-transform:uppercase;
-      font-size:clamp(18px,3vw,22px);
-      display:flex;
-      align-items:center;
-      gap:6px;
-    }
-    .title span.logo{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:3px 9px;
-      border-radius:999px;
-      background:radial-gradient(circle at 0 0,#38bdf8,#0ea5e9);
-      color:#0b1120;
-      font-size:14px;
-      box-shadow:0 0 0 2px rgba(15,23,42,.94);
-    }
-    .subtitle{
-      font-size:12px;
-      text-transform:uppercase;
-      color:var(--muted);
-      letter-spacing:.16em;
-    }
-    .hud{
-      display:flex;
-      gap:6px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:5px 10px;
-      border-radius:999px;
-      border:1px solid rgba(148,163,184,.6);
-      background:radial-gradient(circle at top,rgba(30,64,175,.9),rgba(15,23,42,.95));
-      font-size:12px;
-      min-width:80px;
-      justify-content:center;
-    }
-    .pill-label{
-      text-transform:uppercase;
-      letter-spacing:.1em;
-      color:var(--muted);
-      font-size:10px;
-    }
-    .pill-value{
-      font-variant-numeric:tabular-nums;
-      font-weight:600;
-    }
-    .pill.timer{
-      background:radial-gradient(circle at top,rgba(248,113,113,.95),rgba(30,64,175,.96));
-      border-color:rgba(248,113,113,.7);
-    }
-    .pill.lives{
-      background:radial-gradient(circle at top,rgba(52,211,153,.95),rgba(15,23,42,.98));
-      border-color:rgba(74,222,128,.8);
-    }
+import random
+import tkinter as tk
+from tkinter import messagebox
 
-    .seed-row{
-      display:flex;
-      flex-wrap:wrap;
-      gap:6px;
-      margin-bottom:8px;
-      align-items:center;
-      justify-content:space-between;
-    }
-    .seed-left{
-      display:flex;
-      flex-wrap:wrap;
-      gap:6px;
-      align-items:center;
-    }
-    .seed-input-wrap{
-      display:flex;
-      align-items:stretch;
-      border-radius:999px;
-      overflow:hidden;
-      border:1px solid rgba(148,163,184,.55);
-      background:rgba(15,23,42,.9);
-    }
-    .seed-input-wrap input{
-      border:none;
-      outline:none;
-      padding:7px 10px;
-      font-size:12px;
-      background:transparent;
-      color:var(--bright);
-      width:108px;
-      text-transform:uppercase;
-      font-variant-numeric:tabular-nums;
-      letter-spacing:.1em;
-    }
-    .seed-input-wrap span{
-      padding:7px 10px;
-      font-size:11px;
-      text-transform:uppercase;
-      letter-spacing:.14em;
-      color:var(--muted);
-      border-left:1px solid rgba(55,65,81,.9);
-    }
-    .btn{
-      border:none;
-      outline:none;
-      border-radius:999px;
-      padding:7px 14px;
-      font-size:12px;
-      font-weight:600;
-      cursor:pointer;
-      letter-spacing:.06em;
-      text-transform:uppercase;
-      font-family:inherit;
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      white-space:nowrap;
-      transition:transform .08s ease, box-shadow .08s ease, background .12s ease;
-      background:linear-gradient(135deg,#38bdf8,#0ea5e9);
-      color:#0b1120;
-      box-shadow:0 10px 25px rgba(56,189,248,.45);
-    }
-    .btn.secondary{
-      background:rgba(15,23,42,1);
-      color:var(--bright);
-      border:1px solid rgba(148,163,184,.7);
-      box-shadow:0 10px 25px rgba(15,23,42,.9);
-    }
-    .btn:active{
-      transform:translateY(1px) scale(.98);
-      box-shadow:0 4px 12px rgba(15,23,42,.8);
-    }
-    .btn:disabled{
-      opacity:.6;
-      cursor:default;
-      box-shadow:none;
-      transform:none;
-    }
+# ---- Config ----
+ROWS = 10
+COLS = 10
+MINES = 12
 
-    .board-wrap{
-      background:radial-gradient(circle at top,rgba(15,23,42,1),rgba(2,6,23,1));
-      border-radius:var(--radius);
-      padding:10px;
-      border:1px solid rgba(30,64,175,.9);
-      box-shadow:0 15px 40px rgba(15,23,42,.9);
-      position:relative;
-      overflow:hidden;
-    }
-    .board{
-      display:grid;
-      grid-template-columns:repeat(15, 1fr);
-      gap:2px;
-      touch-action:manipulation;
-    }
-    .cell{
-      position:relative;
-      border:none;
-      outline:none;
-      background:radial-gradient(circle at 20% 0%,rgba(15,23,42,1),rgba(15,23,42,.95));
-      border-radius:6px;
-      aspect-ratio:1/1;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      font-size:clamp(12px,1.7vw,18px);
-      color:var(--bright);
-      box-shadow:inset 0 0 0 1px rgba(148,163,184,.45);
-      transition:background .08s ease, transform .05s ease, box-shadow .08s ease, color .12s ease;
-      -webkit-tap-highlight-color:transparent;
-    }
-    .cell.unrevealed::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      border-radius:inherit;
-      background:linear-gradient(145deg,rgba(248,250,252,.06),transparent 55%);
-      opacity:.9;
-      pointer-events:none;
-    }
-    .cell.unrevealed:active{
-      transform:translateY(1px) scale(.98);
-      box-shadow:inset 0 0 0 1px rgba(148,163,184,.85);
-    }
-    .cell.revealed{
-      cursor:default;
-      box-shadow:inset 0 0 0 1px rgba(15,23,42,.9);
-      background:radial-gradient(circle at 30% 0%,rgba(30,64,175,.9),rgba(15,23,42,1));
-    }
-    .cell.treasure{
-      background:radial-gradient(circle at 25% 0%,rgba(250,204,21,1),rgba(30,64,175,1));
-      box-shadow:inset 0 0 0 1px rgba(253,224,71,.9);
-      color:#0b1120;
-      font-weight:700;
-    }
-    .cell.trap{
-      background:radial-gradient(circle at 20% 0%,rgba(248,113,113,1),rgba(127,29,29,1));
-      box-shadow:inset 0 0 0 1px rgba(254,226,226,.9);
-      color:#020617;
-      font-weight:700;
-    }
-    .cell.monster{
-      background:radial-gradient(circle at 20% 0%,rgba(248,113,22,1),rgba(127,29,29,1));
-      box-shadow:inset 0 0 0 1px rgba(251,146,60,.9);
-      color:#020617;
-      font-weight:700;
-    }
-    .cell.clue{
-      background:radial-gradient(circle at 25% 0%,rgba(34,197,94,1),rgba(15,23,42,1));
-      box-shadow:inset 0 0 0 1px rgba(74,222,128,.9);
-    }
-    .cell.empty{
-      background:radial-gradient(circle at 20% 0%,rgba(30,64,175,.8),rgba(15,23,42,1));
-      color:var(--muted);
-      font-size:11px;
-    }
-    .cell .emoji{
-      font-size:1.2em;
-      margin-right:2px;
-    }
-    .cell .delta{
-      font-size:.7em;
-      opacity:.9;
-      font-variant-numeric:tabular-nums;
-    }
+CELL_SIZE = 32  # px
 
-    .legend-card{
-      background:var(--card);
-      border-radius:var(--radius);
-      padding:10px 11px;
-      border:1px solid rgba(148,163,184,.6);
-      box-shadow:0 15px 32px rgba(15,23,42,.88);
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      font-size:12px;
-    }
-    .legend-title{
-      text-transform:uppercase;
-      font-size:11px;
-      letter-spacing:.18em;
-      color:var(--muted);
-    }
-    .legend-list{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:6px 10px;
-    }
-    .legend-item{
-      display:flex;
-      align-items:center;
-      gap:6px;
-    }
-    .legend-emoji{
-      width:22px;
-      height:22px;
-      border-radius:999px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      font-size:15px;
-      background:radial-gradient(circle at 30% 0,rgba(248,250,252,.95),rgba(30,64,175,.9));
-      box-shadow:0 0 0 1px rgba(148,163,184,.7);
-    }
-    .legend-text{
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-    }
-    .legend-name{
-      font-weight:600;
-      font-size:12px;
-    }
-    .legend-desc{
-      font-size:11px;
-      color:var(--muted);
-    }
 
-    .hint{
-      font-size:11px;
-      color:var(--muted);
-      line-height:1.4;
-      margin-top:4px;
-    }
+class Minesweeper:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Minesweeper")
 
-    .message{
-      margin-top:8px;
-      font-size:12px;
-      min-height:16px;
-      color:var(--muted);
-    }
-    .message strong{
-      color:var(--gold);
-    }
+        self.topbar = tk.Frame(root)
+        self.topbar.pack(fill="x")
 
-    .badge-row{
-      display:flex;
-      gap:5px;
-      margin-top:2px;
-      flex-wrap:wrap;
-    }
-    .badge{
-      font-size:10px;
-      text-transform:uppercase;
-      letter-spacing:.12em;
-      padding:3px 7px;
-      border-radius:999px;
-      border:1px solid rgba(148,163,184,.5);
-      color:var(--muted);
-      background:rgba(15,23,42,.8);
-    }
+        self.status_var = tk.StringVar()
+        self.status_label = tk.Label(self.topbar, textvariable=self.status_var, anchor="w")
+        self.status_label.pack(side="left", padx=8)
 
-    .overlay{
-      position:absolute;
-      inset:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      pointer-events:none;
-      opacity:0;
-      transition:opacity .2s ease;
-    }
-    .overlay.visible{
-      opacity:1;
-      pointer-events:auto;
-    }
-    .overlay-backdrop{
-      position:absolute;
-      inset:0;
-      background:radial-gradient(circle at 50% 0%,rgba(15,23,42,.1),rgba(15,23,42,.95));
-      backdrop-filter:blur(3px);
-    }
-    .overlay-card{
-      position:relative;
-      z-index:1;
-      background:rgba(15,23,42,.98);
-      border-radius:20px;
-      padding:14px 16px;
-      border:1px solid rgba(248,250,252,.18);
-      max-width:260px;
-      width:88%;
-      text-align:center;
-      box-shadow:0 20px 50px rgba(0,0,0,.85);
-      font-size:13px;
-    }
-    .overlay-title{
-      font-weight:700;
-      margin-bottom:6px;
-      font-size:14px;
-    }
-    .overlay-body{
-      color:var(--muted);
-      line-height:1.5;
-      margin-bottom:10px;
-    }
-    .overlay-body span{
-      color:var(--gold);
-      font-weight:600;
-    }
-    .overlay-seed{
-      margin-top:4px;
-      font-size:11px;
-      color:var(--muted);
-    }
-    .overlay-seed-code{
-      display:inline-block;
-      margin-top:3px;
-      padding:4px 8px;
-      border-radius:999px;
-      background:rgba(15,23,42,1);
-      border:1px dashed rgba(148,163,184,.8);
-      font-variant-numeric:tabular-nums;
-      letter-spacing:.16em;
-      text-transform:uppercase;
-      color:var(--bright);
-    }
-    .overlay-actions{
-      display:flex;
-      justify-content:center;
-      gap:8px;
-      margin-top:6px;
-    }
-  </style>
-</head>
-<body>
-<div class="game-shell">
-  <div class="content">
-    <div class="left">
-      <header class="header">
-        <div class="title-block">
-          <div class="title">
-            <span class="logo">TS</span>
-            Treasure Sweeper
-          </div>
-          <div class="subtitle">60-second treasure race</div>
-        </div>
-        <div class="hud">
-          <div class="pill timer">
-            <div class="pill-label">Time</div>
-            <div class="pill-value" id="timeValue">60s</div>
-          </div>
-          <div class="pill">
-            <div class="pill-label">Score</div>
-            <div class="pill-value" id="scoreValue">0</div>
-          </div>
-          <div class="pill lives">
-            <div class="pill-label">Lives</div>
-            <div class="pill-value" id="livesValue">3</div>
-          </div>
-        </div>
-      </header>
+        self.restart_btn = tk.Button(self.topbar, text="Restart", command=self.restart)
+        self.restart_btn.pack(side="right", padx=8, pady=6)
 
-      <div class="seed-row">
-        <div class="seed-left">
-          <div class="seed-input-wrap">
-            <input id="seedInput" autocomplete="off" />
-            <span>Map Code</span>
-          </div>
-          <button class="btn secondary" id="useSeedBtn">Use Code</button>
-          <button class="btn secondary" id="randomMapBtn">New Map</button>
-        </div>
-        <button class="btn" id="restartBtn">Restart Round</button>
-      </div>
+        self.board_frame = tk.Frame(root)
+        self.board_frame.pack(padx=10, pady=10)
 
-      <div class="board-wrap">
-        <div id="board" class="board"></div>
-        <div class="overlay" id="overlay">
-          <div class="overlay-backdrop"></div>
-          <div class="overlay-card">
-            <div class="overlay-title" id="overlayTitle">Round Over</div>
-            <div class="overlay-body">
-              Final Score: <span id="overlayScore">0</span><br/>
-              Time Left: <span id="overlayTime">00s</span>
-              <div class="overlay-seed">
-                Share this map code with your friend:
-                <div class="overlay-seed-code" id="overlaySeedCode">ABC123</div>
-              </div>
-            </div>
-            <div class="overlay-actions">
-              <button class="btn secondary" id="overlayCloseBtn">Close</button>
-            </div>
-          </div>
-        </div>
-      </div>
+        self.buttons = [[None for _ in range(COLS)] for _ in range(ROWS)]
 
-      <div class="message" id="message">
-        Tap any tile to start the 60s countdown. Same map code = same board for both players.
-      </div>
-    </div>
+        for r in range(ROWS):
+            for c in range(COLS):
+                btn = tk.Button(
+                    self.board_frame,
+                    width=2,
+                    height=1,
+                    font=("Helvetica", 14),
+                    relief="raised",
+                )
+                btn.grid(row=r, column=c, sticky="nsew")
+                btn.bind("<Button-1>", lambda e, rr=r, cc=c: self.on_left_click(rr, cc))
+                btn.bind("<Button-3>", lambda e, rr=r, cc=c: self.on_right_click(rr, cc))
+                self.buttons[r][c] = btn
 
-    <aside class="right">
-      <div class="legend-card">
-        <div class="legend-title">Legend</div>
-        <div class="legend-list">
-          <div class="legend-item">
-            <div class="legend-emoji">💎</div>
-            <div class="legend-text">
-              <div class="legend-name">Treasure</div>
-              <div class="legend-desc">+10 points</div>
-            </div>
-          </div>
-          <div class="legend-item">
-            <div class="legend-emoji">⚡</div>
-            <div class="legend-text">
-              <div class="legend-name">Trap</div>
-              <div class="legend-desc">-8 points</div>
-            </div>
-          </div>
-          <div class="legend-item">
-            <div class="legend-emoji">🧭</div>
-            <div class="legend-text">
-              <div class="legend-name">Clue</div>
-              <div class="legend-desc">Shows nearby 💎</div>
-            </div>
-          </div>
-          <div class="legend-item">
-            <div class="legend-emoji">🔥</div>
-            <div class="legend-text">
-              <div class="legend-name">Monster</div>
-              <div class="legend-desc">Lose 1 life & points</div>
-            </div>
-          </div>
-        </div>
-        <div class="badge-row">
-          <div class="badge">15 × 15 Board</div>
-          <div class="badge">60s Round</div>
-          <div class="badge">3 Lives</div>
-        </div>
-        <div class="hint">
-          <strong>How to compete:</strong><br/>
-          1. One player taps <em>New Map</em> → share the 6-letter code.<br/>
-          2. Both players enter the same code and play.<br/>
-          3. Higher score (tie-breaker: faster finish) wins!
-        </div>
-      </div>
-    </aside>
-  </div>
-</div>
+        for c in range(COLS):
+            self.board_frame.grid_columnconfigure(c, weight=1)
+        for r in range(ROWS):
+            self.board_frame.grid_rowconfigure(r, weight=1)
 
-<script>
-(function(){
-  const BOARD_SIZE = 15;
-  const GAME_TIME = 60;
-  const TREASURE_POINTS = 10;
-  const TRAP_POINTS = -8;
-  const MONSTER_POINTS = -15;
-  const START_LIVES = 3;
+        self.restart()
 
-  const boardEl = document.getElementById('board');
-  const timeValueEl = document.getElementById('timeValue');
-  const scoreValueEl = document.getElementById('scoreValue');
-  const livesValueEl = document.getElementById('livesValue');
-  const messageEl = document.getElementById('message');
-  const seedInputEl = document.getElementById('seedInput');
-  const useSeedBtn = document.getElementById('useSeedBtn');
-  const randomMapBtn = document.getElementById('randomMapBtn');
-  const restartBtn = document.getElementById('restartBtn');
+    def restart(self):
+        self.game_over = False
+        self.flags = 0
+        self.revealed_count = 0
 
-  const overlayEl = document.getElementById('overlay');
-  const overlayTitleEl = document.getElementById('overlayTitle');
-  const overlayScoreEl = document.getElementById('overlayScore');
-  const overlayTimeEl = document.getElementById('overlayTime');
-  const overlaySeedCodeEl = document.getElementById('overlaySeedCode');
-  const overlayCloseBtn = document.getElementById('overlayCloseBtn');
+        # Internal boards
+        self.mines = [[False for _ in range(COLS)] for _ in range(ROWS)]
+        self.numbers = [[0 for _ in range(COLS)] for _ in range(ROWS)]
+        self.revealed = [[False for _ in range(COLS)] for _ in range(ROWS)]
+        self.flagged = [[False for _ in range(COLS)] for _ in range(ROWS)]
 
-  let boardData = [];
-  let gameState = 'idle'; // idle | running | over
-  let timeLeft = GAME_TIME;
-  let timerId = null;
-  let score = 0;
-  let lives = START_LIVES;
-  let currentSeed = '';
+        # Reset UI
+        for r in range(ROWS):
+            for c in range(COLS):
+                b = self.buttons[r][c]
+                b.config(text="", state="normal", relief="raised", bg="SystemButtonFace")
 
-  function padTime(sec){
-    return (sec<10? '0':'') + sec + 's';
-  }
+        self.place_mines()
+        self.compute_numbers()
+        self.update_status()
 
-  function updateHUD(){
-    timeValueEl.textContent = padTime(timeLeft);
-    scoreValueEl.textContent = score;
-    livesValueEl.textContent = lives;
-  }
+    def update_status(self):
+        remaining = MINES - self.flags
+        self.status_var.set(f"Mines: {MINES} | Flags used: {self.flags} | Flags remaining: {remaining}")
 
-  function randomSeed(){
-    // 6-character alphanumeric uppercase
-    return Math.random().toString(36).substring(2,8).toUpperCase();
-  }
+    def place_mines(self):
+        positions = [(r, c) for r in range(ROWS) for c in range(COLS)]
+        random.shuffle(positions)
+        for i in range(MINES):
+            r, c = positions[i]
+            self.mines[r][c] = True
 
-  // xmur3 & mulberry32 for seeded RNG
-  function xmur3(str){
-    let h = 1779033703 ^ str.length;
-    for(let i=0;i<str.length;i++){
-      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
-      h = h << 13 | h >>> 19;
-    }
-    return function(){
-      h = Math.imul(h ^ (h >>> 16), 2246822507);
-      h = Math.imul(h ^ (h >>> 13), 3266489909);
-      h ^= h >>> 16;
-      return h >>> 0;
-    }
-  }
-  function mulberry32(a){
-    return function(){
-      let t = a += 0x6D2B79F5;
-      t = Math.imul(t ^ t >>> 15, t | 1);
-      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-      return ((t ^ t >>> 14) >>> 0) / 4294967296;
-    }
-  }
+    def compute_numbers(self):
+        for r in range(ROWS):
+            for c in range(COLS):
+                if self.mines[r][c]:
+                    self.numbers[r][c] = -1
+                    continue
+                count = 0
+                for rr, cc in self.neighbors(r, c):
+                    if self.mines[rr][cc]:
+                        count += 1
+                self.numbers[r][c] = count
 
-  function makeRngFromSeed(seedStr){
-    const seedGen = xmur3(seedStr);
-    const seed = seedGen();
-    return mulberry32(seed);
-  }
+    def neighbors(self, r, c):
+        for dr in (-1, 0, 1):
+            for dc in (-1, 0, 1):
+                if dr == 0 and dc == 0:
+                    continue
+                rr, cc = r + dr, c + dc
+                if 0 <= rr < ROWS and 0 <= cc < COLS:
+                    yield rr, cc
 
-  function resetGameState(){
-    clearInterval(timerId);
-    timerId = null;
-    score = 0;
-    lives = START_LIVES;
-    timeLeft = GAME_TIME;
-    gameState = 'idle';
-    updateHUD();
-    messageEl.innerHTML = 'Tap any tile to start the 60s countdown. Same map code = same board for both players.';
-    hideOverlay();
-  }
+    def on_right_click(self, r, c):
+        if self.game_over or self.revealed[r][c]:
+            return
 
-  function generateBoard(seedStr){
-    currentSeed = seedStr || randomSeed();
-    seedInputEl.value = currentSeed.toUpperCase();
-    const rng = makeRngFromSeed(currentSeed);
+        if self.flagged[r][c]:
+            self.flagged[r][c] = False
+            self.flags -= 1
+            self.buttons[r][c].config(text="")
+        else:
+            # Optional: prevent placing more flags than mines
+            if self.flags >= MINES:
+                return
+            self.flagged[r][c] = True
+            self.flags += 1
+            self.buttons[r][c].config(text="🚩")
 
-    // Initialize board data
-    boardData = [];
-    for(let r=0;r<BOARD_SIZE;r++){
-      const row = [];
-      for(let c=0;c<BOARD_SIZE;c++){
-        row.push({
-          type:'empty', // empty, treasure, trap, monster, clue
-          revealed:false,
-          neighborTreasures:0
-        });
-      }
-      boardData.push(row);
-    }
+        self.update_status()
+        self.check_win()
 
-    // First pass: assign treasures, traps, monsters, empties
-    for(let r=0;r<BOARD_SIZE;r++){
-      for(let c=0;c<BOARD_SIZE;c++){
-        const roll = rng();
-        let type = 'empty';
-        if(roll < 0.14){
-          type = 'treasure';
-        }else if(roll < 0.23){
-          type = 'trap';
-        }else if(roll < 0.30){
-          type = 'monster';
-        } // else empty
-        boardData[r][c].type = type;
-      }
-    }
+    def on_left_click(self, r, c):
+        if self.game_over or self.flagged[r][c] or self.revealed[r][c]:
+            return
 
-    // Compute neighbor treasure counts
-    const dirs = [-1,0,1];
-    for(let r=0;r<BOARD_SIZE;r++){
-      for(let c=0;c<BOARD_SIZE;c++){
-        let count = 0;
-        for(let dr of dirs){
-          for(let dc of dirs){
-            if(dr===0 && dc===0) continue;
-            const nr = r+dr;
-            const nc = c+dc;
-            if(nr>=0 && nr<BOARD_SIZE && nc>=0 && nc<BOARD_SIZE){
-              if(boardData[nr][nc].type === 'treasure') count++;
-            }
-          }
-        }
-        boardData[r][c].neighborTreasures = count;
-      }
-    }
+        if self.mines[r][c]:
+            self.lose(r, c)
+            return
 
-    // Convert some empties with neighbor treasures to clues
-    for(let r=0;r<BOARD_SIZE;r++){
-      for(let c=0;c<BOARD_SIZE;c++){
-        const cell = boardData[r][c];
-        if(cell.type === 'empty' && cell.neighborTreasures>0){
-          cell.type = 'clue';
-        }
-      }
-    }
+        self.reveal_cell(r, c)
+        self.check_win()
 
-    // Build DOM
-    boardEl.innerHTML = '';
-    for(let r=0;r<BOARD_SIZE;r++){
-      for(let c=0;c<BOARD_SIZE;c++){
-        const cellEl = document.createElement('button');
-        cellEl.className = 'cell unrevealed';
-        cellEl.setAttribute('data-r',r);
-        cellEl.setAttribute('data-c',c);
-        cellEl.addEventListener('click', onCellClick, {passive:true});
-        boardEl.appendChild(cellEl);
-      }
-    }
+    def reveal_cell(self, r, c):
+        # Flood fill reveal for empty cells
+        stack = [(r, c)]
+        while stack:
+            rr, cc = stack.pop()
+            if self.revealed[rr][cc] or self.flagged[rr][cc]:
+                continue
+            if self.mines[rr][cc]:
+                continue
 
-    resetGameState();
-  }
+            self.revealed[rr][cc] = True
+            self.revealed_count += 1
 
-  function startTimerIfNeeded(){
-    if(gameState === 'idle'){
-      gameState = 'running';
-      messageEl.innerHTML = 'Hunt treasures fast! Round ends when time hits 0 or you lose all lives.';
-      timerId = setInterval(()=>{
-        if(gameState !== 'running'){
-          clearInterval(timerId);
-          timerId = null;
-          return;
-        }
-        timeLeft--;
-        if(timeLeft <= 0){
-          timeLeft = 0;
-          updateHUD();
-          endGame('Time is up!');
-        }else{
-          updateHUD();
-        }
-      },1000);
-    }
-  }
+            n = self.numbers[rr][cc]
+            b = self.buttons[rr][cc]
+            b.config(relief="sunken", bg="#ddd")
 
-  function endGame(reason){
-    if(gameState === 'over') return;
-    gameState = 'over';
-    clearInterval(timerId);
-    timerId = null;
-    updateHUD();
-    let msg = '<strong>Round over.</strong> ';
-    msg += reason ? reason + ' ' : '';
-    msg += 'Tap <strong>Restart Round</strong> to try this map again, or <strong>New Map</strong> for a fresh one.';
-    messageEl.innerHTML = msg;
+            if n > 0:
+                b.config(text=str(n), fg="black")
+            else:
+                b.config(text="")
+                for nr, nc in self.neighbors(rr, cc):
+                    if not self.revealed[nr][nc] and not self.mines[nr][nc]:
+                        stack.append((nr, nc))
 
-    overlayTitleEl.textContent = 'Round Over';
-    overlayScoreEl.textContent = score;
-    overlayTimeEl.textContent = padTime(timeLeft);
-    overlaySeedCodeEl.textContent = currentSeed.toUpperCase();
-    showOverlay();
-  }
+    def lose(self, hit_r, hit_c):
+        self.game_over = True
+        # Reveal all mines
+        for r in range(ROWS):
+            for c in range(COLS):
+                b = self.buttons[r][c]
+                if self.mines[r][c]:
+                    b.config(text="💣", bg="#f7b2b2")
+                b.config(state="disabled")
+        self.buttons[hit_r][hit_c].config(bg="#ff6b6b")
+        messagebox.showinfo("Game Over", "Boom! You hit a mine.")
 
-  function showOverlay(){
-    overlayEl.classList.add('visible');
-  }
-  function hideOverlay(){
-    overlayEl.classList.remove('visible');
-  }
+    def check_win(self):
+        # Win if all non-mine cells are revealed
+        total_safe = ROWS * COLS - MINES
+        if not self.game_over and self.revealed_count == total_safe:
+            self.game_over = True
+            for r in range(ROWS):
+                for c in range(COLS):
+                    self.buttons[r][c].config(state="disabled")
+            messagebox.showinfo("You Win!", "Nice! You cleared all safe cells.")
 
-  function revealCell(r,c){
-    const cell = boardData[r][c];
-    if(cell.revealed) return;
-    cell.revealed = true;
-    const idx = r*BOARD_SIZE + c;
-    const cellEl = boardEl.children[idx];
-    cellEl.classList.remove('unrevealed');
-    cellEl.classList.add('revealed');
-
-    // Clear content before setting
-    cellEl.textContent = '';
-    const emojiSpan = document.createElement('span');
-    emojiSpan.className = 'emoji';
-    const deltaSpan = document.createElement('span');
-    deltaSpan.className = 'delta';
-
-    if(cell.type === 'treasure'){
-      score += TREASURE_POINTS;
-      emojiSpan.textContent = '💎';
-      deltaSpan.textContent = '+10';
-      cellEl.appendChild(emojiSpan);
-      cellEl.appendChild(deltaSpan);
-      cellEl.classList.add('treasure');
-      messageEl.innerHTML = 'Nice! You found a <strong>Treasure</strong> 💎 (+10).';
-    }else if(cell.type === 'trap'){
-      score += TRAP_POINTS;
-      emojiSpan.textContent = '⚡';
-      deltaSpan.textContent = '-8';
-      cellEl.appendChild(emojiSpan);
-      cellEl.appendChild(deltaSpan);
-      cellEl.classList.add('trap');
-      messageEl.innerHTML = 'Ouch! A <strong>Trap</strong> ⚡ (-8).';
-    }else if(cell.type === 'monster'){
-      score += MONSTER_POINTS;
-      lives -= 1;
-      emojiSpan.textContent = '🔥';
-      deltaSpan.textContent = '-15';
-      cellEl.appendChild(emojiSpan);
-      cellEl.appendChild(deltaSpan);
-      cellEl.classList.add('monster');
-      if(lives <= 0){
-        lives = 0;
-        updateHUD();
-        endGame('The monsters got you!');
-        return;
-      }else{
-        messageEl.innerHTML = 'You woke a <strong>Monster</strong> 🔥 (-15, -1 life). Careful!';
-      }
-    }else if(cell.type === 'clue'){
-      cellEl.classList.add('clue');
-      emojiSpan.textContent = '🧭';
-      const countSpan = document.createElement('span');
-      countSpan.className = 'delta';
-      countSpan.textContent = '×'+cell.neighborTreasures;
-      cellEl.appendChild(emojiSpan);
-      cellEl.appendChild(countSpan);
-      messageEl.innerHTML = '🧭 Clue: there are <strong>'+cell.neighborTreasures+'</strong> treasures touching this tile.';
-    }else{
-      cellEl.classList.add('empty');
-      cellEl.textContent = '';
-    }
-
-    updateHUD();
-  }
-
-  function onCellClick(e){
-    if(gameState === 'over') return;
-    const target = e.currentTarget;
-    const r = parseInt(target.getAttribute('data-r'),10);
-    const c = parseInt(target.getAttribute('data-c'),10);
-    const cell = boardData[r][c];
-    if(cell.revealed) return;
-    startTimerIfNeeded();
-    revealCell(r,c);
-  }
-
-  useSeedBtn.addEventListener('click', ()=>{
-    const value = (seedInputEl.value || '').trim().toUpperCase();
-    if(!value){
-      messageEl.innerHTML = 'Enter a map code (e.g., <strong>'+randomSeed()+'</strong>) or tap <strong>New Map</strong>.';
-      return;
-    }
-    generateBoard(value);
-    messageEl.innerHTML = 'Map loaded. Tap any tile to start your 60s round.';
-  });
-
-  randomMapBtn.addEventListener('click', ()=>{
-    generateBoard(randomSeed());
-    messageEl.innerHTML = 'New random map ready. Share the code <strong>'+currentSeed.toUpperCase()+'</strong> with your friend.';
-  });
-
-  restartBtn.addEventListener('click', ()=>{
-    generateBoard(currentSeed);
-    messageEl.innerHTML = 'Same map, fresh start. Tap any tile to begin the timer.';
-  });
-
-  overlayCloseBtn.addEventListener('click', hideOverlay);
-
-  // Start with a random seed
-  const initialSeed = randomSeed();
-  generateBoard(initialSeed);
-})();
-</script>
-</body>
-</html>
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = Minesweeper(root)
+    root.mainloop()
