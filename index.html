@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <style>
     :root{
-      --bg:#050816;
       --card:rgba(15,23,42,.96);
       --accent:#38bdf8;
       --bright:#e5e7eb;
@@ -202,6 +201,7 @@
     }
 
     .board-wrap{
+      width:100%;
       background:radial-gradient(circle at top,rgba(15,23,42,1),rgba(2,6,23,1));
       border-radius:var(--radius);
       padding:10px;
@@ -216,6 +216,11 @@
       gap:2px;
       touch-action:manipulation;
       user-select:none;
+
+      /* ✅ FIX: give the grid a real width so tiles don't collapse */
+      width:100%;
+      max-width:540px;
+      margin:0 auto;
     }
 
     /* ---- FIX: prevent cell resizing / layout shift ---- */
@@ -502,8 +507,7 @@
       </div>
 
       <div class="message" id="message">
-        Left click to reveal. Right click (or long-press) to flag 🚩.
-        Treasures can drop from number tiles!
+        Left click to reveal. Right click (or long-press) to flag 🚩. Treasures can drop from number tiles!
       </div>
     </div>
 
@@ -548,7 +552,7 @@
         <div class="hint">
           <strong>Treasures:</strong><br/>
           🧯 <b>Defuse</b> auto-flags a real mine.<br/>
-          🔍 <b>Scan</b> reveals safe neighbors (3×3) around the tile you clicked.<br/>
+          🔍 <b>Scan</b> reveals safe neighbors (around the tile you clicked).<br/>
           🛡️ <b>Shield</b> saves you from the next mine click.
         </div>
       </div>
@@ -558,12 +562,11 @@
 
 <script>
 (function(){
-  // ---- Config ----
   const BOARD_SIZE = 15;
   const MINES_COUNT = 40;
 
-  // ✅ Turned up from 5% to 20% (change this anytime)
-  const TREASURE_CHANCE = 0.20; // 20% chance when you reveal a NUMBER tile (1-8)
+  // ✅ Turn up / down anytime (0.30 = 30%, etc.)
+  const TREASURE_CHANCE = 0.20; // 20% chance when revealing a NUMBER tile (1-8)
 
   const boardEl = document.getElementById('board');
 
@@ -608,7 +611,7 @@
   function padTime(sec){ return (sec < 10 ? '0' : '') + sec + 's'; }
   function randomSeed(){ return Math.random().toString(36).substring(2,8).toUpperCase(); }
 
-  // xmur3 & mulberry32 for seeded RNG (same as your original)
+  // xmur3 & mulberry32 for seeded RNG
   function xmur3(str){
     let h = 1779033703 ^ str.length;
     for(let i=0;i<str.length;i++){
@@ -716,16 +719,13 @@
         btn.setAttribute('data-r', r);
         btn.setAttribute('data-c', c);
 
-        // left click
         btn.addEventListener('click', onReveal, {passive:false});
 
-        // right click (desktop)
         btn.addEventListener('contextmenu', (e)=>{
           e.preventDefault();
           onFlag(e);
         });
 
-        // long press (mobile)
         let pressTimer = null;
         btn.addEventListener('pointerdown', (e)=>{
           if(e.pointerType === 'mouse') return;
@@ -745,13 +745,11 @@
     seedInputEl.value = currentSeed;
     const rng = makeRngFromSeed(currentSeed);
 
-    // Create cells
     board = [];
     for(let i=0;i<BOARD_SIZE*BOARD_SIZE;i++){
       board.push({ mine:false, revealed:false, flagged:false, num:0 });
     }
 
-    // Place mines via shuffled indices (seeded)
     const positions = [];
     for(let i=0;i<BOARD_SIZE*BOARD_SIZE;i++) positions.push(i);
     for(let i=positions.length-1;i>0;i--){
@@ -762,7 +760,6 @@
       board[positions[i]].mine = true;
     }
 
-    // Compute numbers
     for(let r=0;r<BOARD_SIZE;r++){
       for(let c=0;c<BOARD_SIZE;c++){
         const cell = board[idx(r,c)];
@@ -853,19 +850,6 @@
     }
   }
 
-  function revealSingleSafeCellNoTreasure(r,c){
-    const cell = board[idx(r,c)];
-    if(cell.revealed || cell.flagged || cell.mine) return;
-
-    if(cell.num === 0){
-      floodRevealNoTreasure(r,c);
-    } else {
-      cell.revealed = true;
-      revealedSafe++;
-      renderCell(r,c);
-    }
-  }
-
   function floodRevealNoTreasure(startR, startC){
     const stack = [[startR, startC]];
     while(stack.length){
@@ -897,8 +881,8 @@
   }
 
   function awardTreasure(triggerR, triggerC){
-    // 1/3 each treasure
     const roll = Math.random();
+
     if(roll < 1/3){
       // 🧯 Defuse: auto-flag one real mine (unrevealed, unflagged)
       const candidates = [];
@@ -906,7 +890,7 @@
         if(board[i].mine && !board[i].revealed && !board[i].flagged) candidates.push(i);
       }
       if(candidates.length === 0){
-        messageEl.innerHTML = '🎁 Treasure found: <strong>Defuse</strong> — but no mines left to defuse!';
+        messageEl.innerHTML = '🎁 Treasure found: <strong>Defuse</strong> — but no mines left!';
         return;
       }
       const pick = candidates[Math.floor(Math.random() * candidates.length)];
@@ -918,14 +902,23 @@
       renderCell(pr, pc);
 
       popTreasureFX(triggerR, triggerC);
-      messageEl.innerHTML = '🎁 Treasure found: <strong>Defuse</strong> 🧯 — auto-flagged a real mine!';
+      messageEl.innerHTML = '🎁 Treasure found: <strong>Defuse</strong> 🧯 — auto-flagged a mine!';
       updateHUD();
     } else if(roll < 2/3){
-      // 🔍 Scan: reveal safe neighbors (3×3) around the clicked number tile
+      // 🔍 Scan: reveal safe neighbors around the clicked number tile
       popTreasureFX(triggerR, triggerC);
       messageEl.innerHTML = '🎁 Treasure found: <strong>Scan</strong> 🔍 — revealing safe tiles around this number!';
       for(const [rr,cc] of neighbors(triggerR, triggerC)){
-        revealSingleSafeCellNoTreasure(rr, cc);
+        const cell = board[idx(rr,cc)];
+        if(!cell.mine && !cell.flagged && !cell.revealed){
+          if(cell.num === 0){
+            floodRevealNoTreasure(rr, cc);
+          } else {
+            cell.revealed = true;
+            revealedSafe++;
+            renderCell(rr, cc);
+          }
+        }
       }
       checkWin();
       updateHUD();
@@ -933,14 +926,13 @@
       // 🛡️ Shield: save you from the next mine click
       shieldActive = true;
       popTreasureFX(triggerR, triggerC);
-      messageEl.innerHTML = '🎁 Treasure found: <strong>Shield</strong> 🛡️ — your next mine click is blocked!';
+      messageEl.innerHTML = '🎁 Treasure found: <strong>Shield</strong> 🛡️ — blocks your next mine click!';
       updateHUD();
     }
   }
 
   function maybeTreasureOnNumberCell(r,c, cell){
-    // Only on revealed number tiles (1-8)
-    if(cell.num <= 0) return;
+    if(cell.num <= 0) return; // only 1-8 tiles
     if(Math.random() < TREASURE_CHANCE){
       awardTreasure(r,c);
     }
@@ -955,7 +947,6 @@
     const cell = board[idx(r,c)];
 
     if(cell.revealed || cell.flagged) return;
-
     startTimerIfNeeded();
 
     if(cell.mine){
@@ -985,7 +976,7 @@
       revealedSafe++;
       renderCell(r,c);
 
-      // 🎁 Treasure roll ONLY for number tiles (this is where the probability applies)
+      // 🎁 Treasure roll applies here
       maybeTreasureOnNumberCell(r,c,cell);
     }
 
