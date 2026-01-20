@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Minesweeper</title>
+  <title>Minesweeper + Treasures</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <style>
     :root{
@@ -33,7 +33,7 @@
     }
     .game-shell{
       width:100%;
-      max-width:960px;
+      max-width:980px;
       background:linear-gradient(135deg,rgba(15,23,42,.98),rgba(15,23,42,.92));
       border-radius:24px;
       padding:14px 14px 18px;
@@ -56,16 +56,16 @@
       position:relative;
       z-index:1;
       display:grid;
-      grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);
+      grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);
       gap:14px;
     }
-    @media (max-width:780px){
+    @media (max-width:860px){
       .content{ grid-template-columns:1fr; }
     }
-    .left, .right{min-width:0;}
+
     .header{
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       justify-content:space-between;
       gap:10px;
       margin-bottom:10px;
@@ -97,11 +97,14 @@
       color:var(--muted);
       letter-spacing:.16em;
     }
+
     .hud{
       display:flex;
       gap:6px;
       flex-wrap:wrap;
       justify-content:flex-end;
+      align-items:flex-start;
+      max-width:520px;
     }
     .pill{
       display:inline-flex;
@@ -112,8 +115,9 @@
       border:1px solid rgba(148,163,184,.6);
       background:radial-gradient(circle at top,rgba(30,64,175,.9),rgba(15,23,42,.95));
       font-size:12px;
-      min-width:90px;
+      min-width:88px;
       justify-content:center;
+      user-select:none;
     }
     .pill-label{
       text-transform:uppercase;
@@ -123,11 +127,15 @@
     }
     .pill-value{
       font-variant-numeric:tabular-nums;
-      font-weight:600;
+      font-weight:700;
     }
     .pill.timer{
       background:radial-gradient(circle at top,rgba(248,113,113,.95),rgba(30,64,175,.96));
       border-color:rgba(248,113,113,.7);
+    }
+    .pill.treasure{
+      border-color:rgba(250,204,21,.55);
+      background:radial-gradient(circle at top,rgba(250,204,21,.18),rgba(15,23,42,.95));
     }
 
     .seed-row{
@@ -178,7 +186,7 @@
       border-radius:999px;
       padding:7px 14px;
       font-size:12px;
-      font-weight:600;
+      font-weight:700;
       cursor:pointer;
       letter-spacing:.06em;
       text-transform:uppercase;
@@ -187,10 +195,11 @@
       align-items:center;
       gap:6px;
       white-space:nowrap;
-      transition:transform .08s ease, box-shadow .08s ease, background .12s ease;
+      transition:transform .08s ease, box-shadow .08s ease, background .12s ease, opacity .12s ease;
       background:linear-gradient(135deg,#38bdf8,#0ea5e9);
       color:#0b1120;
       box-shadow:0 10px 25px rgba(56,189,248,.45);
+      user-select:none;
     }
     .btn.secondary{
       background:rgba(15,23,42,1);
@@ -201,6 +210,12 @@
     .btn:active{
       transform:translateY(1px) scale(.98);
       box-shadow:0 4px 12px rgba(15,23,42,.8);
+    }
+    .btn:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      box-shadow:none;
+      transform:none;
     }
 
     .board-wrap{
@@ -220,16 +235,15 @@
       user-select:none;
     }
 
-    /* ---------- FIX: prevent cell resizing / layout shift ---------- */
+    /* prevent resizing/jumps */
     .cell{
       position:relative;
       border:0;
       outline:none;
-      padding:0;            /* important: remove default button padding */
-      line-height:1;        /* important: stabilize height when text appears */
+      padding:0;
+      line-height:1;
       min-width:0;
       min-height:0;
-
       background:radial-gradient(circle at 20% 0%,rgba(15,23,42,1),rgba(15,23,42,.95));
       border-radius:6px;
       aspect-ratio:1/1;
@@ -240,21 +254,17 @@
       font-size:clamp(12px,1.7vw,18px);
       color:var(--bright);
       box-shadow:inset 0 0 0 1px rgba(148,163,184,.45);
-      transition:background .08s ease, transform .05s ease, box-shadow .08s ease, color .12s ease;
+      transition:background .08s ease, transform .05s ease, box-shadow .08s ease, color .12s ease, filter .12s ease;
       -webkit-tap-highlight-color:transparent;
       box-sizing:border-box;
     }
     .cell:focus,
-    .cell:focus-visible{
-      outline:none;         /* important: remove focus outline that can change size */
-    }
-    /* Optional: keep a nice focus highlight without resizing */
+    .cell:focus-visible{ outline:none; }
     .cell:focus-visible{
       box-shadow:
         inset 0 0 0 1px rgba(148,163,184,.65),
         0 0 0 2px rgba(56,189,248,.35);
     }
-    /* --------------------------------------------------------------- */
 
     .cell.unrevealed::before{
       content:"";
@@ -272,20 +282,37 @@
     .cell.revealed{
       cursor:default;
       background:radial-gradient(circle at 30% 0%,rgba(30,64,175,.9),rgba(15,23,42,1));
+      box-shadow:inset 0 0 0 1px rgba(15,23,42,.9);
     }
     .cell.mine{
       background:radial-gradient(circle at 20% 0%,rgba(248,113,113,1),rgba(127,29,29,1));
       box-shadow:inset 0 0 0 1px rgba(254,226,226,.9);
       color:#020617;
-      font-weight:800;
+      font-weight:900;
     }
     .cell.flagged{
       box-shadow:inset 0 0 0 1px rgba(250,204,21,.85);
     }
     .cell .num{
-      font-weight:800;
+      font-weight:900;
       letter-spacing:.02em;
     }
+
+    /* Scan peek effect */
+    .cell.scan-peek{
+      filter:brightness(1.18);
+      box-shadow:
+        inset 0 0 0 1px rgba(250,204,21,.55),
+        0 0 0 2px rgba(250,204,21,.18);
+    }
+
+    .message{
+      margin-top:8px;
+      font-size:12px;
+      min-height:16px;
+      color:var(--muted);
+    }
+    .message strong{ color:var(--gold); }
 
     .legend-card{
       background:var(--card);
@@ -295,7 +322,7 @@
       box-shadow:0 15px 32px rgba(15,23,42,.88);
       display:flex;
       flex-direction:column;
-      gap:8px;
+      gap:10px;
       font-size:12px;
     }
     .legend-title{
@@ -326,28 +353,12 @@
       box-shadow:0 0 0 1px rgba(148,163,184,.7);
     }
     .legend-text{ display:flex; flex-direction:column; gap:2px; }
-    .legend-name{ font-weight:600; font-size:12px; }
+    .legend-name{ font-weight:700; font-size:12px; }
     .legend-desc{ font-size:11px; color:var(--muted); }
-
-    .hint{
-      font-size:11px;
-      color:var(--muted);
-      line-height:1.4;
-      margin-top:4px;
-    }
-
-    .message{
-      margin-top:8px;
-      font-size:12px;
-      min-height:16px;
-      color:var(--muted);
-    }
-    .message strong{ color:var(--gold); }
 
     .badge-row{
       display:flex;
       gap:5px;
-      margin-top:2px;
       flex-wrap:wrap;
     }
     .badge{
@@ -359,6 +370,12 @@
       border:1px solid rgba(148,163,184,.5);
       color:var(--muted);
       background:rgba(15,23,42,.8);
+    }
+
+    .hint{
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.4;
     }
 
     .overlay{
@@ -388,14 +405,14 @@
       border-radius:20px;
       padding:14px 16px;
       border:1px solid rgba(248,250,252,.18);
-      max-width:300px;
+      max-width:320px;
       width:88%;
       text-align:center;
       box-shadow:0 20px 50px rgba(0,0,0,.85);
       font-size:13px;
     }
     .overlay-title{
-      font-weight:800;
+      font-weight:900;
       margin-bottom:6px;
       font-size:14px;
       letter-spacing:.06em;
@@ -408,7 +425,7 @@
     }
     .overlay-body span{
       color:var(--gold);
-      font-weight:700;
+      font-weight:800;
     }
     .overlay-seed{
       margin-top:6px;
@@ -445,8 +462,9 @@
             <span class="logo">MS</span>
             Minesweeper
           </div>
-          <div class="subtitle">seeded classic minesweeper</div>
+          <div class="subtitle">treasures drop from number tiles (5%)</div>
         </div>
+
         <div class="hud">
           <div class="pill timer">
             <div class="pill-label">Time</div>
@@ -460,6 +478,19 @@
             <div class="pill-label">Mines</div>
             <div class="pill-value" id="minesValue">0</div>
           </div>
+
+          <div class="pill treasure" title="Defuse removes one random unrevealed mine">
+            <div class="pill-label">🧯</div>
+            <div class="pill-value" id="defuseValue">0</div>
+          </div>
+          <div class="pill treasure" title="Scan lets you peek a 3×3 area (temporary)">
+            <div class="pill-label">🔍</div>
+            <div class="pill-value" id="scanValue">0</div>
+          </div>
+          <div class="pill treasure" title="Shield saves you from one mine click">
+            <div class="pill-label">🛡️</div>
+            <div class="pill-value" id="shieldValue">0</div>
+          </div>
         </div>
       </header>
 
@@ -472,7 +503,12 @@
           <button class="btn secondary" id="useSeedBtn">Use Code</button>
           <button class="btn secondary" id="randomMapBtn">New Map</button>
         </div>
-        <button class="btn" id="restartBtn">Restart</button>
+
+        <div class="seed-left">
+          <button class="btn secondary" id="defuseBtn" title="Use one Defuse">Use 🧯</button>
+          <button class="btn secondary" id="scanBtn" title="Use one Scan, then click a tile">Use 🔍</button>
+          <button class="btn" id="restartBtn">Restart</button>
+        </div>
       </div>
 
       <div class="board-wrap">
@@ -495,11 +531,10 @@
             </div>
           </div>
         </div>
-
       </div>
 
       <div class="message" id="message">
-        Left click to reveal. Right click (or long-press) to flag 🚩. Same map code = same mine layout.
+        Left click to reveal. Right click / long-press to flag 🚩. Click revealed number tiles for a 5% treasure drop.
       </div>
     </div>
 
@@ -536,13 +571,18 @@
             </div>
           </div>
         </div>
+
         <div class="badge-row">
           <div class="badge">15 × 15 Board</div>
           <div class="badge" id="badgeMines">Mines: 40</div>
-          <div class="badge">Seeded Maps</div>
+          <div class="badge">Treasures: 5%</div>
         </div>
+
         <div class="hint">
-          <strong>Tip:</strong> If a cell shows “3”, exactly <em>three</em> mines touch it (8 neighbors). Use flags to mark mines.
+          <strong>Treasures:</strong><br/>
+          🧯 Defuse removes one random unrevealed mine.<br/>
+          🔍 Scan lets you peek a 3×3 area for 1.5s.<br/>
+          🛡️ Shield saves you from one mine click (the mine is removed).
         </div>
       </div>
     </aside>
@@ -553,7 +593,8 @@
 (function(){
   // ---- Config ----
   const BOARD_SIZE = 15;
-  const MINES_COUNT = 40;
+  const MINES_START = 40;
+  const TREASURE_CHANCE = 0.05; // 5% chance when clicking a revealed number tile
 
   const boardEl = document.getElementById('board');
 
@@ -564,11 +605,19 @@
   const badgeMinesEl = document.getElementById('badgeMines');
   const messageEl = document.getElementById('message');
 
+  const defuseValueEl = document.getElementById('defuseValue');
+  const scanValueEl = document.getElementById('scanValue');
+  const shieldValueEl = document.getElementById('shieldValue');
+
   // Seed controls
   const seedInputEl = document.getElementById('seedInput');
   const useSeedBtn = document.getElementById('useSeedBtn');
   const randomMapBtn = document.getElementById('randomMapBtn');
   const restartBtn = document.getElementById('restartBtn');
+
+  // Power buttons
+  const defuseBtn = document.getElementById('defuseBtn');
+  const scanBtn = document.getElementById('scanBtn');
 
   // Overlay
   const overlayEl = document.getElementById('overlay');
@@ -579,13 +628,27 @@
   const overlayCloseBtn = document.getElementById('overlayCloseBtn');
 
   // ---- State ----
-  let board = []; // {mine:boolean, revealed:boolean, flagged:boolean, num:int}
+  // cell: { mine, revealed, flagged, num, looted }
+  let board = [];
   let gameState = 'idle'; // idle | running | over
   let flagsUsed = 0;
   let revealedSafe = 0;
+
   let currentSeed = '';
   let timerId = null;
   let startMs = 0;
+
+  // power inventory
+  let defuseCount = 0;
+  let scanCount = 0;
+  let shieldCount = 0;
+
+  // dynamic mine count (can decrease with defuse/shield)
+  let minesTotal = MINES_START;
+
+  // scan mode
+  let scanMode = false;
+  let scanTimeoutId = null;
 
   // ---- Helpers ----
   function padTime(sec){ return (sec < 10 ? '0' : '') + sec + 's'; }
@@ -635,9 +698,16 @@
   }
 
   function updateHUD(){
-    minesValueEl.textContent = MINES_COUNT;
-    badgeMinesEl.textContent = 'Mines: ' + MINES_COUNT;
+    minesValueEl.textContent = minesTotal;
+    badgeMinesEl.textContent = 'Mines: ' + minesTotal;
     flagsValueEl.textContent = flagsUsed;
+
+    defuseValueEl.textContent = defuseCount;
+    scanValueEl.textContent = scanCount;
+    shieldValueEl.textContent = shieldCount;
+
+    defuseBtn.disabled = (defuseCount <= 0) || (gameState === 'over');
+    scanBtn.disabled = (scanCount <= 0) || (gameState === 'over') || scanMode;
 
     if(gameState === 'running'){
       const sec = Math.floor((Date.now() - startMs)/1000);
@@ -671,263 +741,8 @@
     timerId = null;
   }
 
-  // ---- Game Gen ----
-  function resetState(){
-    gameState = 'idle';
-    flagsUsed = 0;
-    revealedSafe = 0;
-    stopTimer();
-    updateHUD();
-    hideOverlay();
-    messageEl.innerHTML = 'Left click to reveal. Right click (or long-press) to flag 🚩. Same map code = same mine layout.';
-  }
-
-  function buildDom(){
-    boardEl.innerHTML = '';
+  function clearScanPeek(){
+    if(scanTimeoutId) clearTimeout(scanTimeoutId);
+    scanTimeoutId = null;
     for(let r=0;r<BOARD_SIZE;r++){
-      for(let c=0;c<BOARD_SIZE;c++){
-        const btn = document.createElement('button');
-        btn.className = 'cell unrevealed';
-        btn.setAttribute('data-r', r);
-        btn.setAttribute('data-c', c);
-
-        // left click
-        btn.addEventListener('click', onReveal, {passive:false});
-
-        // right click (desktop)
-        btn.addEventListener('contextmenu', (e)=>{
-          e.preventDefault();
-          onFlag(e);
-        });
-
-        // long press (mobile)
-        let pressTimer = null;
-        btn.addEventListener('pointerdown', (e)=>{
-          if(e.pointerType === 'mouse') return;
-          pressTimer = setTimeout(()=>{
-            onFlag(e);
-          }, 450);
-        });
-        btn.addEventListener('pointerup', ()=> clearTimeout(pressTimer));
-        btn.addEventListener('pointercancel', ()=> clearTimeout(pressTimer));
-        btn.addEventListener('pointerleave', ()=> clearTimeout(pressTimer));
-
-        boardEl.appendChild(btn);
-      }
-    }
-  }
-
-  function generateBoard(seedStr){
-    currentSeed = (seedStr || randomSeed()).toUpperCase();
-    seedInputEl.value = currentSeed;
-    const rng = makeRngFromSeed(currentSeed);
-
-    // Create cells
-    board = [];
-    for(let i=0;i<BOARD_SIZE*BOARD_SIZE;i++){
-      board.push({ mine:false, revealed:false, flagged:false, num:0 });
-    }
-
-    // Place mines via shuffled indices
-    const positions = [];
-    for(let i=0;i<BOARD_SIZE*BOARD_SIZE;i++) positions.push(i);
-    for(let i=positions.length-1;i>0;i--){
-      const j = Math.floor(rng() * (i+1));
-      [positions[i], positions[j]] = [positions[j], positions[i]];
-    }
-    for(let i=0;i<MINES_COUNT;i++){
-      board[positions[i]].mine = true;
-    }
-
-    // Compute numbers
-    for(let r=0;r<BOARD_SIZE;r++){
-      for(let c=0;c<BOARD_SIZE;c++){
-        const cell = board[idx(r,c)];
-        if(cell.mine){ cell.num = -1; continue; }
-        let count = 0;
-        for(const [rr,cc] of neighbors(r,c)){
-          if(board[idx(rr,cc)].mine) count++;
-        }
-        cell.num = count;
-      }
-    }
-
-    buildDom();
-    resetState();
-    updateHUD();
-  }
-
-  // ---- Rendering ----
-  function setButtonText(el, text){
-    el.textContent = '';
-    if(text === '') return;
-    const span = document.createElement('span');
-    span.className = 'num';
-    span.textContent = text;
-    el.appendChild(span);
-  }
-
-  function renderCell(r,c){
-    const cell = board[idx(r,c)];
-    const el = boardEl.children[idx(r,c)];
-
-    el.classList.toggle('revealed', cell.revealed);
-    el.classList.toggle('unrevealed', !cell.revealed);
-    el.classList.toggle('flagged', cell.flagged);
-
-    if(!cell.revealed){
-      el.textContent = cell.flagged ? '🚩' : '';
-      return;
-    }
-
-    if(cell.mine){
-      el.classList.add('mine');
-      el.textContent = '💣';
-      return;
-    }
-
-    el.classList.remove('mine');
-    if(cell.num > 0){
-      setButtonText(el, String(cell.num));
-    } else {
-      el.textContent = '';
-    }
-  }
-
-  function revealAllMines(){
-    for(let r=0;r<BOARD_SIZE;r++){
-      for(let c=0;c<BOARD_SIZE;c++){
-        const cell = board[idx(r,c)];
-        if(cell.mine){
-          cell.revealed = true;
-          cell.flagged = false;
-          renderCell(r,c);
-        }
-      }
-    }
-  }
-
-  function endGame(win){
-    if(gameState === 'over') return;
-    gameState = 'over';
-    stopTimer();
-    updateHUD();
-
-    if(win){
-      messageEl.innerHTML = '<strong>You win!</strong> All safe tiles revealed.';
-      showOverlay('Victory', 'Won');
-    }else{
-      messageEl.innerHTML = '<strong>Game over.</strong> You clicked a mine.';
-      showOverlay('Game Over', 'Lost');
-    }
-  }
-
-  function checkWin(){
-    const safeTotal = BOARD_SIZE*BOARD_SIZE - MINES_COUNT;
-    if(revealedSafe >= safeTotal){
-      endGame(true);
-    }
-  }
-
-  function floodReveal(startR, startC){
-    const stack = [[startR, startC]];
-    while(stack.length){
-      const [r,c] = stack.pop();
-      const cell = board[idx(r,c)];
-      if(cell.revealed || cell.flagged) continue;
-      if(cell.mine) continue;
-
-      cell.revealed = true;
-      revealedSafe++;
-      renderCell(r,c);
-
-      if(cell.num === 0){
-        for(const [rr,cc] of neighbors(r,c)){
-          const ncell = board[idx(rr,cc)];
-          if(!ncell.revealed && !ncell.mine && !ncell.flagged){
-            stack.push([rr,cc]);
-          }
-        }
-      }
-    }
-  }
-
-  // ---- Input handlers ----
-  function onReveal(e){
-    if(gameState === 'over') return;
-    const target = e.currentTarget;
-    const r = parseInt(target.getAttribute('data-r'),10);
-    const c = parseInt(target.getAttribute('data-c'),10);
-    const cell = board[idx(r,c)];
-
-    if(cell.revealed || cell.flagged) return;
-
-    startTimerIfNeeded();
-
-    if(cell.mine){
-      cell.revealed = true;
-      renderCell(r,c);
-      revealAllMines();
-      endGame(false);
-      return;
-    }
-
-    if(cell.num === 0){
-      floodReveal(r,c);
-    } else {
-      cell.revealed = true;
-      revealedSafe++;
-      renderCell(r,c);
-    }
-
-    checkWin();
-  }
-
-  function onFlag(e){
-    if(gameState === 'over') return;
-    const target = e.currentTarget || e.target;
-    if(!target || !target.classList.contains('cell')) return;
-
-    const r = parseInt(target.getAttribute('data-r'),10);
-    const c = parseInt(target.getAttribute('data-c'),10);
-    const cell = board[idx(r,c)];
-    if(cell.revealed) return;
-
-    startTimerIfNeeded();
-
-    cell.flagged = !cell.flagged;
-    flagsUsed += cell.flagged ? 1 : -1;
-    if(flagsUsed < 0) flagsUsed = 0;
-    renderCell(r,c);
-    updateHUD();
-  }
-
-  // ---- UI buttons ----
-  useSeedBtn.addEventListener('click', ()=>{
-    const value = (seedInputEl.value || '').trim().toUpperCase();
-    if(!value){
-      messageEl.innerHTML = 'Enter a map code (e.g., <strong>'+randomSeed()+'</strong>) or tap <strong>New Map</strong>.';
-      return;
-    }
-    generateBoard(value);
-    messageEl.innerHTML = 'Map loaded. Start by revealing a tile.';
-  });
-
-  randomMapBtn.addEventListener('click', ()=>{
-    generateBoard(randomSeed());
-    messageEl.innerHTML = 'New map ready. Share the code <strong>'+currentSeed+'</strong> with your friend.';
-  });
-
-  restartBtn.addEventListener('click', ()=>{
-    generateBoard(currentSeed);
-    messageEl.innerHTML = 'Same map, fresh start.';
-  });
-
-  overlayCloseBtn.addEventListener('click', hideOverlay);
-
-  // ---- Start ----
-  generateBoard(randomSeed());
-})();
-</script>
-</body>
-</html>
+      for(let c=0;c<BOARD
