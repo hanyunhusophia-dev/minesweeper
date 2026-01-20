@@ -219,10 +219,17 @@
       touch-action:manipulation;
       user-select:none;
     }
+
+    /* ---------- FIX: prevent cell resizing / layout shift ---------- */
     .cell{
       position:relative;
-      border:none;
+      border:0;
       outline:none;
+      padding:0;            /* important: remove default button padding */
+      line-height:1;        /* important: stabilize height when text appears */
+      min-width:0;
+      min-height:0;
+
       background:radial-gradient(circle at 20% 0%,rgba(15,23,42,1),rgba(15,23,42,.95));
       border-radius:6px;
       aspect-ratio:1/1;
@@ -235,7 +242,20 @@
       box-shadow:inset 0 0 0 1px rgba(148,163,184,.45);
       transition:background .08s ease, transform .05s ease, box-shadow .08s ease, color .12s ease;
       -webkit-tap-highlight-color:transparent;
+      box-sizing:border-box;
     }
+    .cell:focus,
+    .cell:focus-visible{
+      outline:none;         /* important: remove focus outline that can change size */
+    }
+    /* Optional: keep a nice focus highlight without resizing */
+    .cell:focus-visible{
+      box-shadow:
+        inset 0 0 0 1px rgba(148,163,184,.65),
+        0 0 0 2px rgba(56,189,248,.35);
+    }
+    /* --------------------------------------------------------------- */
+
     .cell.unrevealed::before{
       content:"";
       position:absolute;
@@ -251,7 +271,6 @@
     }
     .cell.revealed{
       cursor:default;
-      box-shadow:inset 0 0 0 1px rgba(15,23,42,.9);
       background:radial-gradient(circle at 30% 0%,rgba(30,64,175,.9),rgba(15,23,42,1));
     }
     .cell.mine{
@@ -534,7 +553,8 @@
 (function(){
   // ---- Config ----
   const BOARD_SIZE = 15;
-  const MINES_COUNT = 40; // classic-ish density for 15x15
+  const MINES_COUNT = 40;
+
   const boardEl = document.getElementById('board');
 
   // HUD
@@ -569,12 +589,9 @@
 
   // ---- Helpers ----
   function padTime(sec){ return (sec < 10 ? '0' : '') + sec + 's'; }
+  function randomSeed(){ return Math.random().toString(36).substring(2,8).toUpperCase(); }
 
-  function randomSeed(){
-    return Math.random().toString(36).substring(2,8).toUpperCase();
-  }
-
-  // xmur3 & mulberry32 for seeded RNG (kept from your code)
+  // xmur3 & mulberry32 for seeded RNG
   function xmur3(str){
     let h = 1779033703 ^ str.length;
     for(let i=0;i<str.length;i++){
@@ -603,10 +620,7 @@
   }
 
   function idx(r,c){ return r * BOARD_SIZE + c; }
-
-  function inBounds(r,c){
-    return r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE;
-  }
+  function inBounds(r,c){ return r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE; }
 
   function neighbors(r,c){
     const out = [];
@@ -762,12 +776,10 @@
     el.classList.toggle('flagged', cell.flagged);
 
     if(!cell.revealed){
-      // show flag if flagged
       el.textContent = cell.flagged ? '🚩' : '';
       return;
     }
 
-    // revealed:
     if(cell.mine){
       el.classList.add('mine');
       el.textContent = '💣';
@@ -817,7 +829,6 @@
     }
   }
 
-  // Flood fill for zeros
   function floodReveal(startR, startC){
     const stack = [[startR, startC]];
     while(stack.length){
@@ -861,7 +872,6 @@
       return;
     }
 
-    // reveal
     if(cell.num === 0){
       floodReveal(r,c);
     } else {
